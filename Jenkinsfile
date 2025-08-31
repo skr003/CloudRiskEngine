@@ -15,14 +15,23 @@ pipeline {
             }
         }
 
-        stage('Collect IAM & Logs') {
+        stage('Query Azure Infra State') {
             steps {
-                sh '''
-                bash scripts/collect_iam_data.sh
-                '''
+                script {
+                withCredentials([
+                    string(credentialsId: 'AZURE_CLIENT_ID', variable: 'AZURE_CLIENT_ID'),
+                    string(credentialsId: 'AZURE_CLIENT_SECRET', variable: 'AZURE_CLIENT_SECRET'),
+                    string(credentialsId: 'AZURE_TENANT_ID', variable: 'AZURE_TENANT_ID'),
+                    string(credentialsId: 'AZURE_SUBSCRIPTION_ID', variable: 'AZURE_SUBSCRIPTION_ID')
+                ]) {
+                    sh 'az login --service-principal --username "$AZURE_CLIENT_ID" --password "$AZURE_CLIENT_SECRET" --tenant "$AZURE_TENANT_ID"'
+                    sh 'az account set --subscription "$AZURE_SUBSCRIPTION_ID"'
+                }       
+                    sh './scripts/collect_iam_data.sh'
+                }
+                }
             }
-        }
-
+        
         stage('Build Privilege Graph') {
             steps {
                 sh '''
