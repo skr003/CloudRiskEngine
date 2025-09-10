@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 
 def run(cmd):
     res = subprocess.run(cmd, capture_output=True, text=True)
-    if res.returncode != 0:
+    if res.returncode != 0 or not res.stdout.strip():
         return None
     return res.stdout
 
@@ -26,29 +26,51 @@ def collect_activity_logs(days=7):
     ])
     return json.loads(out) if out else []
 
-# Load manual SP mapping
-SP_FALLBACK = {}
-if os.path.exists("sp_mapping.json"):
-    with open("sp_mapping.json") as f:
-        SP_FALLBACK = json.load(f)
+# -------------------
+# Build caches
+# -------------------
+USER_CACHE, SP_CACHE, GROUP_CACHE = {}, {}, {}
 
-UNRESOLVED_SPS = set()
+def build_cache():
+    global USER_CACHE, SP_CACHE, GROUP_CACHE
+
+    # Users → id → displayName
+    out = run(["az", "ad", "user", "list", "-o", "json"])
+    if out:
+        for u in json.loads(out):
+            USER_CACHE[u["id"]] = u.get("displayName")
+
+    # Service Principals → id/appId → displayName
+    out = run(["az", "ad", "sp", "list", "-o", "json"])
+    if out:
+        for sp in json.loads(out):
+            name = sp.get("displayName") or sp.get("appDisplayName")
+            if sp.get("id"):
+                SP_CACHE[sp["id"]] = name
+            if sp.get("appId"):
+                SP_CACHE[sp["appId"]] = name
+
+    # Groups → id → displayName
+    out = run(["az", "ad", "group", "list", "-o", "json"])
+    if out:
+        for g in json.loads(out):
+            GROUP_CACHE[g["id"]] = g.get("displayName")
 
 def resolve_principal_name(a):
     pid = a.get("principalId")
     ptype = a.get("principalType")
 
-    # Service Principals
-    if ptype == "ServicePrincipal":
-        if pid in SP_FALLBACK:
-            return SP_FALLBACK[pid]
-        UNRESOLVED_SPS.add(pid)
-        return pid
+    if pid in USER_CACHE:
+        return USER_CACHE[pid]
+    if pid in SP_CACHE:
+        return SP_CACHE[pid]
+    if pid in GROUP_CACHE:
+        return GROUP_CACHE[pid]
 
-    # Users / Groups: fall back to principalName or displayName
+    # fallback if still unresolved
     return (
-        a.get("principalDisplayName")  # if available
-        or a.get("principalName")      # usually UPN/mail
+        a.get("principalDisplayName")
+        or a.get("principalName")
         or pid
     )
 
@@ -60,6 +82,7 @@ def enrich_assignments(assignments):
     return enriched
 
 def main():
+    build_cache()
     assignments = collect_role_assignments()
     role_defs = collect_role_definitions()
     logs = collect_activity_logs(7)
@@ -77,13 +100,7 @@ def main():
     with open("output/azure_data.json", "w") as f:
         json.dump(data, f, indent=2)
 
-    # Save unresolved SPs for manual mapping
-    if UNRESOLVED_SPS:
-        with open("output/unresolved_sps.json", "w") as f:
-            json.dump(sorted(list(UNRESOLVED_SPS)), f, indent=2)
-        print(f"⚠️ Unresolved SPs written to output/unresolved_sps.json")
-
-    print("✅ Collected -> output/azure_data.json")
+    print("✅ Collected -> output/azure_data.json (resourceName = displayName)")
 
 if __name__ == "__main__":
     main()
