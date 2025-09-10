@@ -26,24 +26,29 @@ def collect_activity_logs(days=7):
     ])
     return json.loads(out) if out else []
 
-# Load manual mapping file for SPs
+# Load manual SP mapping
 SP_FALLBACK = {}
 if os.path.exists("sp_mapping.json"):
     with open("sp_mapping.json") as f:
         SP_FALLBACK = json.load(f)
 
+UNRESOLVED_SPS = set()
+
 def resolve_principal_name(a):
     pid = a.get("principalId")
     ptype = a.get("principalType")
 
-    # Service Principals fallback
-    if ptype == "ServicePrincipal" and pid in SP_FALLBACK:
-        return SP_FALLBACK[pid]
+    # Service Principals
+    if ptype == "ServicePrincipal":
+        if pid in SP_FALLBACK:
+            return SP_FALLBACK[pid]
+        UNRESOLVED_SPS.add(pid)
+        return pid
 
-    # Try built-in fields
+    # Users / Groups: fall back to principalName or displayName
     return (
-        a.get("principalName")
-        or a.get("principalDisplayName")
+        a.get("principalDisplayName")  # if available
+        or a.get("principalName")      # usually UPN/mail
         or pid
     )
 
@@ -72,7 +77,13 @@ def main():
     with open("output/azure_data.json", "w") as f:
         json.dump(data, f, indent=2)
 
-    print("✅ Collected -> output/azure_data.json (users & groups resolved, SPs via mapping)")
+    # Save unresolved SPs for manual mapping
+    if UNRESOLVED_SPS:
+        with open("output/unresolved_sps.json", "w") as f:
+            json.dump(sorted(list(UNRESOLVED_SPS)), f, indent=2)
+        print(f"⚠️ Unresolved SPs written to output/unresolved_sps.json")
+
+    print("✅ Collected -> output/azure_data.json")
 
 if __name__ == "__main__":
     main()
