@@ -1,8 +1,6 @@
 pipeline {
   agent any
   environment {
-  //  STORAGE_ACCOUNT = "mystorage"
-  //  CONTAINER = "drift"
     STORAGE_ACCOUNT_KEY = credentials('STORAGE_ACCOUNT_KEY') // ID of Jenkins credential
   }
   stages {
