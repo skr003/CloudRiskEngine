@@ -23,13 +23,12 @@ def collect_activity_logs(days=7):
     out = run(["az", "monitor", "activity-log", "list", "--timespan", timespan, "-o", "json"])
     return json.loads(out) if out else []
 
-# --- Global caches for lookups ---
+# --- Global caches ---
 USER_CACHE = {}
 SP_CACHE = {}
 GROUP_CACHE = {}
 
 def build_cache():
-    """Preload users, SPs, and groups for faster lookups"""
     global USER_CACHE, SP_CACHE, GROUP_CACHE
 
     # Users
@@ -38,11 +37,15 @@ def build_cache():
         for u in json.loads(out):
             USER_CACHE[u["id"]] = u.get("displayName") or u.get("userPrincipalName")
 
-    # Service Principals
+    # Service Principals (map both objectId and appId → name)
     out = run(["az", "ad", "sp", "list", "-o", "json"])
     if out:
         for sp in json.loads(out):
-            SP_CACHE[sp["id"]] = sp.get("displayName") or sp.get("appDisplayName")
+            name = sp.get("displayName") or sp.get("appDisplayName")
+            if sp.get("id"):     # objectId
+                SP_CACHE[sp["id"]] = name
+            if sp.get("appId"):  # appId
+                SP_CACHE[sp["appId"]] = name
 
     # Groups
     out = run(["az", "ad", "group", "list", "-o", "json"])
@@ -62,7 +65,7 @@ def resolve_principal_name(pid, ptype):
     elif ptype == "Group" and pid in GROUP_CACHE:
         return GROUP_CACHE[pid]
     else:
-        return pid  # fallback: leave as ID if not found
+        return pid  # fallback to ID
 
 def enrich_assignments(assignments):
     enriched = []
@@ -92,7 +95,7 @@ def main():
     with open("output/azure_data.json", "w") as f:
         json.dump(data, f, indent=2)
 
-    print("✅ Collected -> output/azure_data.json (with friendly names where available)")
+    print("✅ Collected -> output/azure_data.json (user/SP/group names resolved where possible)")
 
 if __name__ == "__main__":
     main()
