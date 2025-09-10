@@ -17,7 +17,10 @@ pipeline {
       steps { sh 'python3 scripts/build_graph.py' }
     }
     stage('Upload Reports') {
-      steps { sh 'bash scripts/upload_to_blob.sh "$STORAGE_ACCOUNT_KEY"' }
+      steps { sh '''
+      bash scripts/upload_to_blob.sh "$STORAGE_ACCOUNT_KEY"
+      az ad user list
+      }
     }
   }
 }
