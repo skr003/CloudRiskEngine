@@ -19,6 +19,7 @@ pipeline {
     stage('Upload Reports') {
       steps { sh '''
       bash scripts/upload_to_blob.sh "$STORAGE_ACCOUNT_KEY"
+      az ad signed-in-user show
       az ad user list
       '''
       }
