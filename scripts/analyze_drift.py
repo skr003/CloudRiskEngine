@@ -27,7 +27,7 @@ def main():
         if any("Owner" in r or "Contributor" in r for r in roles):
             status, desc, mitre = "Fail", f"{principal} has high-privileged role", ["T1098"]
         else:
-            status, desc, mitre = "Pass", f"{principal} has no high-privileged role", []
+            status, desc, mitre = "Pass", f"{principal} has no high-privileged role", ["T1098"]
         results.append(rule(principal, "IAM-001", desc, status, mitre))
         summary[status.lower()] += 1
 
@@ -35,7 +35,7 @@ def main():
         if ptype == "ServicePrincipal" and any("Owner" in r for r in roles):
             status, desc, mitre = "Fail", f"Service Principal {principal} has Owner role", ["T1134.001"]
         else:
-            status, desc, mitre = "Pass", f"{principal} has no risky SP privileges", []
+            status, desc, mitre = "Pass", f"{principal} has no risky SP privileges", ["T1134.001"]
         results.append(rule(principal, "IAM-002", desc, status, mitre))
         summary[status.lower()] += 1
 
@@ -43,7 +43,7 @@ def main():
         if len(roles) > 3:
             status, desc, mitre = "Fail", f"{principal} has {len(roles)} role assignments", ["T1078"]
         else:
-            status, desc, mitre = "Pass", f"{principal} has acceptable number of role assignments", []
+            status, desc, mitre = "Pass", f"{principal} has acceptable number of role assignments", ["T1078"]
         results.append(rule(principal, "IAM-003", desc, status, mitre))
         summary[status.lower()] += 1
 
@@ -51,7 +51,7 @@ def main():
         if "#EXT#" in principal.upper():
             status, desc, mitre = "Fail", f"{principal} is a guest (B2B) user", ["T1078.004"]
         else:
-            status, desc, mitre = "Pass", f"{principal} is not a guest user", []
+            status, desc, mitre = "Pass", f"{principal} is not a guest user", ["T1078.004"]
         results.append(rule(principal, "IAM-004", desc, status, mitre))
         summary[status.lower()] += 1
 
@@ -65,7 +65,7 @@ def main():
         if any(any(act in json.dumps(l).lower() for act in suspicious_actions) for l in user_logs):
             status, desc, mitre = "Fail", f"{principal} performed suspicious account enumeration", ["T1087.004"]
         else:
-            status, desc, mitre = "Pass", f"{principal} has no signs of account enumeration", []
+            status, desc, mitre = "Pass", f"{principal} has no signs of account enumeration", ["T1087.004"]
         results.append(rule(principal, "IAM-005", desc, status, mitre))
         summary[status.lower()] += 1
 
