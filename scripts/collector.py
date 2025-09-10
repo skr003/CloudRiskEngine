@@ -31,20 +31,20 @@ GROUP_CACHE = {}
 def build_cache():
     global USER_CACHE, SP_CACHE, GROUP_CACHE
 
-    # Users
+    # Users (friendly names)
     out = run(["az", "ad", "user", "list", "-o", "json"])
     if out:
         for u in json.loads(out):
             USER_CACHE[u["id"]] = u.get("displayName") or u.get("userPrincipalName")
 
-    # Service Principals (map both objectId and appId → name)
+    # Service Principals
     out = run(["az", "ad", "sp", "list", "-o", "json"])
     if out:
         for sp in json.loads(out):
             name = sp.get("displayName") or sp.get("appDisplayName")
-            if sp.get("id"):     # objectId
+            if sp.get("id"):
                 SP_CACHE[sp["id"]] = name
-            if sp.get("appId"):  # appId
+            if sp.get("appId"):
                 SP_CACHE[sp["appId"]] = name
 
     # Groups
@@ -54,26 +54,24 @@ def build_cache():
             GROUP_CACHE[g["id"]] = g.get("displayName")
 
 def resolve_principal_name(pid, ptype):
-    """Resolve principalId into a human-friendly name via caches"""
     if not pid:
         return "unknown"
 
-    if ptype == "User" and pid in USER_CACHE:
+    if pid in USER_CACHE:
         return USER_CACHE[pid]
-    elif ptype == "ServicePrincipal" and pid in SP_CACHE:
+    elif pid in SP_CACHE:
         return SP_CACHE[pid]
-    elif ptype == "Group" and pid in GROUP_CACHE:
+    elif pid in GROUP_CACHE:
         return GROUP_CACHE[pid]
     else:
-        return pid  # fallback to ID
+        return pid  # fallback to raw ID
 
 def enrich_assignments(assignments):
     enriched = []
     for a in assignments:
         pid = a.get("principalId")
         ptype = a.get("principalType")
-        name = resolve_principal_name(pid, ptype)
-        a["resourceName"] = name
+        a["resourceName"] = resolve_principal_name(pid, ptype)
         enriched.append(a)
     return enriched
 
@@ -95,7 +93,7 @@ def main():
     with open("output/azure_data.json", "w") as f:
         json.dump(data, f, indent=2)
 
-    print("✅ Collected -> output/azure_data.json (user/SP/group names resolved where possible)")
+    print("✅ Collected -> output/azure_data.json (friendly usernames + SP names + group names)")
 
 if __name__ == "__main__":
     main()
