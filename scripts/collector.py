@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import json, subprocess
+import json, subprocess, os
 from datetime import datetime, timedelta
 
 def run(cmd):
@@ -20,38 +20,37 @@ def collect_activity_logs(days=7):
     end = datetime.utcnow()
     start = end - timedelta(days=days)
     timespan = f"{start.isoformat()}Z/{end.isoformat()}Z"
-    out = run(["az", "monitor", "activity-log", "list", "--timespan", timespan, "-o", "json"])
+    out = run([
+        "az", "monitor", "activity-log", "list",
+        "--timespan", timespan, "-o", "json"
+    ])
     return json.loads(out) if out else []
 
-def resolve_principal_name(pid, ptype):
-    """Resolve principalId into a human-friendly name via Azure AD"""
-    if not pid:
-        return "unknown"
+# Load manual mapping file for SPs
+SP_FALLBACK = {}
+if os.path.exists("sp_mapping.json"):
+    with open("sp_mapping.json") as f:
+        SP_FALLBACK = json.load(f)
 
-    if ptype == "User":
-        out = run(["az", "ad", "user", "show", "--id", pid, "-o", "json"])
-    elif ptype == "ServicePrincipal":
-        out = run(["az", "ad", "sp", "show", "--id", pid, "-o", "json"])
-    elif ptype == "Group":
-        out = run(["az", "ad", "group", "show", "--group", pid, "-o", "json"])
-    else:
-        return pid  # fallback: return ID if type not handled
+def resolve_principal_name(a):
+    pid = a.get("principalId")
+    ptype = a.get("principalType")
 
-    if out:
-        try:
-            data = json.loads(out)
-            return data.get("displayName") or data.get("appDisplayName") or data.get("userPrincipalName") or pid
-        except Exception:
-            return pid
-    return pid
+    # Service Principals fallback
+    if ptype == "ServicePrincipal" and pid in SP_FALLBACK:
+        return SP_FALLBACK[pid]
+
+    # Try built-in fields
+    return (
+        a.get("principalName")
+        or a.get("principalDisplayName")
+        or pid
+    )
 
 def enrich_assignments(assignments):
     enriched = []
     for a in assignments:
-        pid = a.get("principalId")
-        ptype = a.get("principalType")
-        name = resolve_principal_name(pid, ptype)
-        a["resourceName"] = name
+        a["resourceName"] = resolve_principal_name(a)
         enriched.append(a)
     return enriched
 
@@ -69,10 +68,11 @@ def main():
         "activityLogs": logs
     }
 
+    os.makedirs("output", exist_ok=True)
     with open("output/azure_data.json", "w") as f:
         json.dump(data, f, indent=2)
 
-    print("✅ Collected -> output/azure_data.json (friendly names in resourceName)")
+    print("✅ Collected -> output/azure_data.json (users & groups resolved, SPs via mapping)")
 
 if __name__ == "__main__":
     main()
