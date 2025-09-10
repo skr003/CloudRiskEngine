@@ -80,51 +80,50 @@ def main():
         })
         summary[status.lower()] += 1
 
-    # --- Rule 4: MITRE T1078.004 (Valid Accounts: Cloud Accounts) ---
-# Detect B2B guest accounts or external users (UPN with #EXT#)
-if any("#EXT#" in (a["resourceName"] or "") for a in assignments):
-    status = "Fail"
-    desc = f"{principal} is a guest (B2B) user"
-    mitre = ["T1078.004"]
-else:
-    status = "Pass"
-    desc = f"{principal} is not a guest user"
-    mitre = []
-results.append({
-    "resourceName": principal,
-    "ruleId": "IAM-004",
-    "description": desc,
-    "status": status,
-    "mitre": mitre
-})
-summary[status.lower()] += 1
+        # --- Rule 4: MITRE T1078.004 (Valid Accounts: Cloud Accounts) ---
+        # Detect B2B guest accounts or external users (UPN with #EXT#)
+        if any("#EXT#" in (a["resourceName"] or "") for a in assignments):
+            status = "Fail"
+            desc = f"{principal} is a guest (B2B) user"
+            mitre = ["T1078.004"]
+        else:
+            status = "Pass"
+            desc = f"{principal} is not a guest user"
+            mitre = []
+        results.append({
+            "resourceName": principal,
+            "ruleId": "IAM-004",
+            "description": desc,
+            "status": status,
+            "mitre": mitre
+        })
+        summary[status.lower()] += 1
 
+        # --- Rule 5: MITRE T1087.004 (Account Discovery: Cloud Account) ---
+        # Look into activity logs for suspicious "List users" or "List service principals"
+        suspicious_actions = [
+           "Microsoft.Graph/users/read",
+           "Microsoft.Graph/servicePrincipals/read",
+           "Microsoft.Authorization/roleAssignments/read"
+        ]
+        user_logs = [l for l in data.get("activityLogs", []) if l.get("caller") == principal]
 
-# --- Rule 5: MITRE T1087.004 (Account Discovery: Cloud Account) ---
-# Look into activity logs for suspicious "List users" or "List service principals"
-suspicious_actions = [
-    "Microsoft.Graph/users/read",
-    "Microsoft.Graph/servicePrincipals/read",
-    "Microsoft.Authorization/roleAssignments/read"
-]
-user_logs = [l for l in data.get("activityLogs", []) if l.get("caller") == principal]
-
-if any(any(act in json.dumps(l).lower() for act in suspicious_actions) for l in user_logs):
-    status = "Fail"
-    desc = f"{principal} performed suspicious account enumeration"
-    mitre = ["T1087.004"]
-else:
-    status = "Pass"
-    desc = f"{principal} has no signs of account enumeration"
-    mitre = []
-results.append({
-    "resourceName": principal,
-    "ruleId": "IAM-005",
-    "description": desc,
-    "status": status,
-    "mitre": mitre
-})
-summary[status.lower()] += 1
+        if any(any(act in json.dumps(l).lower() for act in suspicious_actions) for l in user_logs):
+            status = "Fail"
+            desc = f"{principal} performed suspicious account enumeration"
+            mitre = ["T1087.004"]
+        else:
+            status = "Pass"
+            desc = f"{principal} has no signs of account enumeration"
+            mitre = []
+        results.append({
+            "resourceName": principal,
+            "ruleId": "IAM-005",
+            "description": desc,
+            "status": status,
+            "mitre": mitre
+        })
+        summary[status.lower()] += 1
 
 
     drift = {"results": results, "summary": dict(summary)}
