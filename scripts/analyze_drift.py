@@ -34,7 +34,7 @@ def main():
         else:
             status = "Pass"
             desc = f"{principal} has no high-privileged role"
-            mitre = []
+            mitre = ["T1098"]
         results.append({
             "resourceName": principal,
             "ruleId": "IAM-001",
@@ -52,7 +52,7 @@ def main():
         else:
             status = "Pass"
             desc = f"{principal} has no risky SP privileges"
-            mitre = []
+            mitre = ["T1134.001"]
         results.append({
             "resourceName": principal,
             "ruleId": "IAM-002",
@@ -70,7 +70,7 @@ def main():
         else:
             status = "Pass"
             desc = f"{principal} has acceptable number of role assignments"
-            mitre = []
+            mitre = ["T1078"]
         results.append({
             "resourceName": principal,
             "ruleId": "IAM-003",
