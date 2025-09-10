@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
-import json, subprocess
+import json, subprocess, os
 from datetime import datetime, timedelta
 
+# -------------------
+# Helper
+# -------------------
 def run(cmd):
     res = subprocess.run(cmd, capture_output=True, text=True)
     if res.returncode != 0:
@@ -20,61 +23,94 @@ def collect_activity_logs(days=7):
     end = datetime.utcnow()
     start = end - timedelta(days=days)
     timespan = f"{start.isoformat()}Z/{end.isoformat()}Z"
-    out = run(["az", "monitor", "activity-log", "list", "--timespan", timespan, "-o", "json"])
+    out = run([
+        "az", "monitor", "activity-log", "list",
+        "--timespan", timespan, "-o", "json"
+    ])
     return json.loads(out) if out else []
 
-# --- Global caches ---
+# -------------------
+# Global caches
+# -------------------
 USER_CACHE = {}
 SP_CACHE = {}
 GROUP_CACHE = {}
 
+# Manual SP mapping file
+SP_FALLBACK = {}
+if os.path.exists("sp_mapping.json"):
+    with open("sp_mapping.json") as f:
+        SP_FALLBACK = json.load(f)
+
 def build_cache():
     global USER_CACHE, SP_CACHE, GROUP_CACHE
 
-    # Users (friendly names)
+    # Try to preload users
     out = run(["az", "ad", "user", "list", "-o", "json"])
     if out:
-        for u in json.loads(out):
-            USER_CACHE[u["id"]] = u.get("displayName") or u.get("userPrincipalName")
+        try:
+            for u in json.loads(out):
+                USER_CACHE[u["id"]] = u.get("displayName") or u.get("userPrincipalName")
+        except Exception:
+            pass
 
-    # Service Principals
+    # Try to preload service principals
     out = run(["az", "ad", "sp", "list", "-o", "json"])
     if out:
-        for sp in json.loads(out):
-            name = sp.get("displayName") or sp.get("appDisplayName")
-            if sp.get("id"):
-                SP_CACHE[sp["id"]] = name
-            if sp.get("appId"):
-                SP_CACHE[sp["appId"]] = name
+        try:
+            for sp in json.loads(out):
+                name = sp.get("displayName") or sp.get("appDisplayName")
+                if sp.get("id"):
+                    SP_CACHE[sp["id"]] = name
+                if sp.get("appId"):
+                    SP_CACHE[sp["appId"]] = name
+        except Exception:
+            pass
 
-    # Groups
+    # Try to preload groups
     out = run(["az", "ad", "group", "list", "-o", "json"])
     if out:
-        for g in json.loads(out):
-            GROUP_CACHE[g["id"]] = g.get("displayName")
+        try:
+            for g in json.loads(out):
+                GROUP_CACHE[g["id"]] = g.get("displayName")
+        except Exception:
+            pass
 
-def resolve_principal_name(pid, ptype):
-    if not pid:
-        return "unknown"
+def resolve_principal_name(a):
+    pid = a.get("principalId")
+    ptype = a.get("principalType")
 
+    # Users
     if pid in USER_CACHE:
         return USER_CACHE[pid]
-    elif pid in SP_CACHE:
+
+    # Service Principals
+    if pid in SP_CACHE:
         return SP_CACHE[pid]
-    elif pid in GROUP_CACHE:
+    if ptype == "ServicePrincipal" and pid in SP_FALLBACK:
+        return SP_FALLBACK[pid]
+
+    # Groups
+    if pid in GROUP_CACHE:
         return GROUP_CACHE[pid]
-    else:
-        return pid  # fallback to raw ID
+
+    # Fallback: use fields from role assignment if present
+    return (
+        a.get("principalName")
+        or a.get("principalDisplayName")
+        or pid
+    )
 
 def enrich_assignments(assignments):
     enriched = []
     for a in assignments:
-        pid = a.get("principalId")
-        ptype = a.get("principalType")
-        a["resourceName"] = resolve_principal_name(pid, ptype)
+        a["resourceName"] = resolve_principal_name(a)
         enriched.append(a)
     return enriched
 
+# -------------------
+# Main
+# -------------------
 def main():
     build_cache()
     assignments = collect_role_assignments()
@@ -90,10 +126,11 @@ def main():
         "activityLogs": logs
     }
 
+    os.makedirs("output", exist_ok=True)
     with open("output/azure_data.json", "w") as f:
         json.dump(data, f, indent=2)
 
-    print("✅ Collected -> output/azure_data.json (friendly usernames + SP names + group names)")
+    print("✅ Collected -> output/azure_data.json (names where possible, IDs otherwise)")
 
 if __name__ == "__main__":
     main()
