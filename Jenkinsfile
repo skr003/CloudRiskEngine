@@ -14,7 +14,10 @@ pipeline {
       steps { sh 'python3 scripts/generate_remediation.py' }
     }
     stage('Build Graph') {
-      steps { sh 'python3 scripts/build_graph.py' }
+      steps { 
+        sh 'python3 scripts/build_graph.py'
+       archiveArtifacts artifacts: 'output/**', fingerprint: true
+      }
     }
     stage('Upload Reports') {
       steps { sh '''
