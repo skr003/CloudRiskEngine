@@ -1,2 +1,5 @@
 azure-cli
 networkx
+neo4j 
+matplotlib 
+pandas
