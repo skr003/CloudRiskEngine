@@ -35,7 +35,7 @@ def resolve_principal_name(a):
 
     # Try querying Azure AD directly each time
     if ptype == "User":
-        out = run(["az", "ad", "user", "show", "--id", pid, "-o", "json"])
+        out = run(["az", "ad", "user", "show", "-o", "json"])
     elif ptype == "ServicePrincipal":
         out = run(["az", "ad", "sp", "show", "--id", pid, "-o", "json"])
     elif ptype == "Group":
