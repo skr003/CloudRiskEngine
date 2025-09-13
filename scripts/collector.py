@@ -27,47 +27,32 @@ def collect_activity_logs(days=7):
     return json.loads(out) if out else []
 
 # -------------------
-# Build caches
+# No cache lookups
 # -------------------
-USER_CACHE, SP_CACHE, GROUP_CACHE = {}, {}, {}
-
-def build_cache():
-    global USER_CACHE, SP_CACHE, GROUP_CACHE
-
-    # Users → id → displayName
-    out = run(["az", "ad", "user", "list", "-o", "json"])
-    if out:
-        for u in json.loads(out):
-            USER_CACHE[u["id"]] = u.get("displayName")
-
-    # Service Principals → id/appId → displayName
-    out = run(["az", "ad", "sp", "list", "-o", "json"])
-    if out:
-        for sp in json.loads(out):
-            name = sp.get("displayName") or sp.get("appDisplayName")
-            if sp.get("id"):
-                SP_CACHE[sp["id"]] = name
-            if sp.get("appId"):
-                SP_CACHE[sp["appId"]] = name
-
-    # Groups → id → displayName
-    out = run(["az", "ad", "group", "list", "-o", "json"])
-    if out:
-        for g in json.loads(out):
-            GROUP_CACHE[g["id"]] = g.get("displayName")
-
 def resolve_principal_name(a):
     pid = a.get("principalId")
     ptype = a.get("principalType")
 
-    if pid in USER_CACHE:
-        return USER_CACHE[pid]
-    if pid in SP_CACHE:
-        return SP_CACHE[pid]
-    if pid in GROUP_CACHE:
-        return GROUP_CACHE[pid]
+    # Try querying Azure AD directly each time
+    if ptype == "User":
+        out = run(["az", "ad", "user", "show", "--id", pid, "-o", "json"])
+    elif ptype == "ServicePrincipal":
+        out = run(["az", "ad", "sp", "show", "--id", pid, "-o", "json"])
+    elif ptype == "Group":
+        out = run(["az", "ad", "group", "show", "--group", pid, "-o", "json"])
+    else:
+        out = None
 
-    # fallback if still unresolved
+    if out:
+        obj = json.loads(out)
+        return (
+            obj.get("displayName")
+            or obj.get("appDisplayName")
+            or obj.get("userPrincipalName")
+            or pid
+        )
+
+    # fallback if unresolved
     return (
         a.get("principalDisplayName")
         or a.get("principalName")
@@ -82,7 +67,6 @@ def enrich_assignments(assignments):
     return enriched
 
 def main():
-    build_cache()
     assignments = collect_role_assignments()
     role_defs = collect_role_definitions()
     logs = collect_activity_logs(7)
