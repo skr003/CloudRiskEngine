@@ -60,16 +60,22 @@ jq -n \
   --slurpfile assignments "$ASSIGNMENTS_FILE" \
   --slurpfile users "$USERS_FILE" \
   --slurpfile sps "$SPS_FILE" '
-  def lookup(pid; arr):
-    (arr[] | select(.id == pid) |
+  def lookup_user(pid):
+    ($users[0][] | select(.id == pid) |
       .onPremisesSamAccountName
       // .mailNickname
       // .displayName) // null;
 
+  def lookup_sp(pid):
+    ($sps[0][] | select(.id == pid) |
+      .displayName
+      // .appDisplayName
+      // .appId) // null;
+
   [$assignments[0][] | . + {
     resourceName:
-      (lookup(.principalId; $users[0])
-       // (arr = $sps[0]; arr[] | select(.id == .principalId) | .displayName // .appDisplayName)
+      (lookup_user(.principalId)
+       // lookup_sp(.principalId)
        // .principalDisplayName
        // .principalName
        // .principalId)
