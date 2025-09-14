@@ -5,8 +5,13 @@ pipeline {
   }
   stages {
     stage('Collect Azure Data') {
-      steps { sh './scripts/collector.sh' }
+      steps { sh '''
+          chmod +x scripts/collector.sh
+          ./scripts/collector.sh
+        '''
     }
+    }
+  }
     stage('Analyze Drift') {
       steps { sh 'python3 scripts/analyze_drift.py' }
     }
