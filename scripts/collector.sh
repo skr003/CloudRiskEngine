@@ -5,6 +5,12 @@ OUTDIR="output"
 OUTFILE="$OUTDIR/azure_data.json"
 mkdir -p "$OUTDIR"
 
+USERS_FILE="$OUTDIR/users.json"
+SPS_FILE="$OUTDIR/sps.json"
+ASSIGNMENTS_FILE="$OUTDIR/assignments.json"
+ROLEDEFS_FILE="$OUTDIR/roledefs.json"
+ENRICHED_FILE="$OUTDIR/enriched.json"
+
 # -------------------
 # Helper: collect all pages from Graph
 # -------------------
@@ -27,44 +33,37 @@ graph_collect_all() {
 # Collect raw data
 # -------------------
 echo "📥 Collecting role assignments..."
-ASSIGNMENTS=$(az role assignment list --all -o json 2>/dev/null || echo "[]")
-[[ -z "$ASSIGNMENTS" ]] && ASSIGNMENTS="[]"
+az role assignment list --all -o json 2>/dev/null > "$ASSIGNMENTS_FILE" || echo "[]" > "$ASSIGNMENTS_FILE"
 
 echo "📥 Collecting role definitions..."
-ROLE_DEFS=$(az role definition list -o json 2>/dev/null || echo "[]")
-[[ -z "$ROLE_DEFS" ]] && ROLE_DEFS="[]"
+az role definition list -o json 2>/dev/null > "$ROLEDEFS_FILE" || echo "[]" > "$ROLEDEFS_FILE"
+
+echo "📥 Collecting users..."
+graph_collect_all "https://graph.microsoft.com/v1.0/users?\$select=id,displayName,userPrincipalName" > "$USERS_FILE"
+
+echo "📥 Collecting service principals..."
+graph_collect_all "https://graph.microsoft.com/v1.0/servicePrincipals?\$select=id,appId,displayName,appDisplayName" > "$SPS_FILE"
 
 # -------------------
-# Collect principals via Graph API (Users + Service Principals)
-# -------------------
-echo "📥 Collecting users (Graph API)..."
-USERS=$(graph_collect_all "https://graph.microsoft.com/v1.0/users?\$select=id,displayName,userPrincipalName")
-[[ -z "$USERS" || "$USERS" == "null" ]] && USERS="[]"
-
-echo "📥 Collecting service principals (Graph API)..."
-SPS=$(graph_collect_all "https://graph.microsoft.com/v1.0/servicePrincipals?\$select=id,appId,displayName,appDisplayName")
-[[ -z "$SPS" || "$SPS" == "null" ]] && SPS="[]"
-
-# -------------------
-# Enrich assignments with principal display names
+# Enrich assignments with names
 # -------------------
 echo "✨ Enriching assignments..."
-ENRICHED=$(jq -n \
-  --argjson assignments "$ASSIGNMENTS" \
-  --argjson users "$USERS" \
-  --argjson sps "$SPS" '
+jq -n \
+  --slurpfile assignments "$ASSIGNMENTS_FILE" \
+  --slurpfile users "$USERS_FILE" \
+  --slurpfile sps "$SPS_FILE" '
   def lookup(pid; arr):
     (arr[] | select(.id == pid) | .displayName // .appDisplayName // .userPrincipalName) // null;
 
-  [$assignments[] | . + {
+  [$assignments[0][] | . + {
     resourceName:
-      (lookup(.principalId; $users)
-       // lookup(.principalId; $sps)
+      (lookup(.principalId; $users[0])
+       // lookup(.principalId; $sps[0])
        // .principalDisplayName
        // .principalName
        // .principalId)
   }]
-')
+' > "$ENRICHED_FILE"
 
 # -------------------
 # Build final payload
@@ -72,18 +71,18 @@ ENRICHED=$(jq -n \
 echo "📝 Building output..."
 jq -n \
   --arg collectedAt "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
-  --argjson roleAssignments "$ENRICHED" \
-  --argjson roleDefinitions "$ROLE_DEFS" \
+  --slurpfile roleAssignments "$ENRICHED_FILE" \
+  --slurpfile roleDefinitions "$ROLEDEFS_FILE" \
   '{
     collectedAt: $collectedAt,
-    roleAssignments: $roleAssignments,
-    roleDefinitions: $roleDefinitions
+    roleAssignments: $roleAssignments[0],
+    roleDefinitions: $roleDefinitions[0]
   }' > "$OUTFILE"
 
 # -------------------
-# Sanity counts
+# Sanity check
 # -------------------
 echo "✅ Collected -> $OUTFILE"
-echo "   Users:   $(echo "$USERS"   | jq 'length')"
-echo "   SPs:     $(echo "$SPS"     | jq 'length')"
-echo "   Assigns: $(echo "$ASSIGNMENTS" | jq 'length')"
+echo "   Users:   $(jq 'length' "$USERS_FILE")"
+echo "   SPs:     $(jq 'length' "$SPS_FILE")"
+echo "   Assigns: $(jq 'length' "$ENRICHED_FILE")"
