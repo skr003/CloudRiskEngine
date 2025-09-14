@@ -12,24 +12,6 @@ ROLEDEFS_FILE="$OUTDIR/roledefs.json"
 ENRICHED_FILE="$OUTDIR/enriched.json"
 
 # -------------------
-# Helper: collect all pages from Graph
-# -------------------
-graph_collect_all() {
-  local url=$1
-  local results="[]"
-
-  while [[ -n "$url" && "$url" != "null" ]]; do
-    echo "➡️  Fetching $url"
-    page=$(az rest --method GET --url "$url" -o json 2>/dev/null || echo "{}")
-    values=$(echo "$page" | jq '.value // []')
-    results=$(jq -n --argjson a "$results" --argjson b "$values" '$a + $b')
-    url=$(echo "$page" | jq -r '."@odata.nextLink" // empty')
-  done
-
-  echo "$results"
-}
-
-# -------------------
 # Collect raw data
 # -------------------
 echo "📥 Collecting role assignments..."
@@ -38,11 +20,11 @@ az role assignment list --all -o json 2>/dev/null > "$ASSIGNMENTS_FILE" || echo 
 echo "📥 Collecting role definitions..."
 az role definition list -o json 2>/dev/null > "$ROLEDEFS_FILE" || echo "[]" > "$ROLEDEFS_FILE"
 
-echo "📥 Collecting users (only displayName)..."
-graph_collect_all "https://graph.microsoft.com/v1.0/users?\$select=id,displayName" > "$USERS_FILE" || echo "[]" > "$USERS_FILE"
+echo "📥 Collecting users (all properties)..."
+az ad user list -o json 2>/dev/null > "$USERS_FILE" || echo "[]" > "$USERS_FILE"
 
-echo "📥 Collecting service principals..."
-graph_collect_all "https://graph.microsoft.com/v1.0/servicePrincipals?\$select=id,appId,displayName,appDisplayName" > "$SPS_FILE" || echo "[]" > "$SPS_FILE"
+echo "📥 Collecting service principals (all properties)..."
+az ad sp list -o json 2>/dev/null > "$SPS_FILE" || echo "[]" > "$SPS_FILE"
 
 # Ensure files are valid JSON
 for f in "$USERS_FILE" "$SPS_FILE" "$ASSIGNMENTS_FILE" "$ROLEDEFS_FILE"; do
@@ -53,7 +35,7 @@ for f in "$USERS_FILE" "$SPS_FILE" "$ASSIGNMENTS_FILE" "$ROLEDEFS_FILE"; do
 done
 
 # -------------------
-# Enrich assignments with displayName for users
+# Enrich assignments with displayName/app info
 # -------------------
 echo "✨ Enriching assignments..."
 jq -n \
@@ -87,10 +69,14 @@ jq -n \
   --arg collectedAt "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
   --slurpfile roleAssignments "$ENRICHED_FILE" \
   --slurpfile roleDefinitions "$ROLEDEFS_FILE" \
+  --slurpfile users "$USERS_FILE" \
+  --slurpfile sps "$SPS_FILE" \
   '{
     collectedAt: $collectedAt,
     roleAssignments: $roleAssignments[0],
-    roleDefinitions: $roleDefinitions[0]
+    roleDefinitions: $roleDefinitions[0],
+    users: $users[0],
+    servicePrincipals: $sps[0]
   }' > "$OUTFILE"
 
 # -------------------
