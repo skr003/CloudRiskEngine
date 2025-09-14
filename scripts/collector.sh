@@ -72,11 +72,10 @@ enrich_assignments() {
       name=$(echo "$a" | jq -r '.principalDisplayName // .principalName // .principalId')
     fi
 
-    # attach resolved name without blowing up the argument list
+    # Append resourceName without blowing up arguments
     echo "$a" | jq --arg name "$name" '. + {resourceName: $name}'
   done | jq -s '.'
 }
-
 
 main() {
   echo "⏳ Collecting data from Azure..."
