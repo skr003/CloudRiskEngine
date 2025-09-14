@@ -32,12 +32,6 @@ ASSIGNMENTS=$(az role assignment list --all -o json 2>/dev/null || echo "[]")
 echo "📥 Collecting role definitions..."
 ROLE_DEFS=$(az role definition list -o json 2>/dev/null || echo "[]")
 
-echo "📥 Collecting activity logs..."
-END=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-START=$(date -u -d "-7 days" +"%Y-%m-%dT%H:%M:%SZ")
-LOGS=$(az monitor activity-log list \
-  --start-time "$START" --end-time "$END" -o json 2>/dev/null || echo "[]")
-
 # -------------------
 # Collect principals via Graph API
 # -------------------
@@ -48,7 +42,7 @@ echo "📥 Collecting service principals (Graph API)..."
 SPS=$(graph_collect_all "https://graph.microsoft.com/v1.0/servicePrincipals?\$select=id,appId,displayName,appDisplayName")
 
 echo "📥 Collecting groups (Graph API)..."
-GROUPS=$(graph_collect_all "https://graph.microsoft.com/v1.0/groups?\$select=id,displayName")
+#GROUPS=$(graph_collect_all "https://graph.microsoft.com/v1.0/groups?\$select=id,displayName")
 
 # -------------------
 # Enrich assignments with principal display names
