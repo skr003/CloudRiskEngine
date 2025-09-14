@@ -62,7 +62,8 @@ resolve_principal_name() {
 
 enrich_assignments() {
   local assignments="$1"
-  echo "$assignments" | jq -c '.[]' | while read -r a; do
+
+  echo "$assignments" | jq -c '.[]' | while IFS= read -r a; do
     pid=$(echo "$a" | jq -r '.principalId')
     ptype=$(echo "$a" | jq -r '.principalType')
 
@@ -71,9 +72,11 @@ enrich_assignments() {
       name=$(echo "$a" | jq -r '.principalDisplayName // .principalName // .principalId')
     fi
 
+    # attach resolved name without blowing up the argument list
     echo "$a" | jq --arg name "$name" '. + {resourceName: $name}'
   done | jq -s '.'
 }
+
 
 main() {
   echo "⏳ Collecting data from Azure..."
