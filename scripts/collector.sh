@@ -6,20 +6,31 @@ OUTFILE="$OUTDIR/azure_data.json"
 mkdir -p "$OUTDIR"
 
 # -------------------
-# Helper to run AZ CLI safely
+# Helper: collect all pages from Graph
 # -------------------
-run() {
-  az "$@" -o json 2>/dev/null || echo "[]"
+graph_collect_all() {
+  local url=$1
+  local results="[]"
+
+  while [[ -n "$url" && "$url" != "null" ]]; do
+    echo "➡️  Fetching $url"
+    page=$(az rest --method GET --url "$url" -o json 2>/dev/null || echo "{}")
+    values=$(echo "$page" | jq '.value // []')
+    results=$(jq -n --argjson a "$results" --argjson b "$values" '$a + $b')
+    url=$(echo "$page" | jq -r '."@odata.nextLink" // empty')
+  done
+
+  echo "$results"
 }
 
 # -------------------
 # Collect raw data
 # -------------------
 echo "📥 Collecting role assignments..."
-ASSIGNMENTS=$(run role assignment list --all)
+ASSIGNMENTS=$(az role assignment list --all -o json 2>/dev/null || echo "[]")
 
 echo "📥 Collecting role definitions..."
-ROLE_DEFS=$(run role definition list)
+ROLE_DEFS=$(az role definition list -o json 2>/dev/null || echo "[]")
 
 echo "📥 Collecting activity logs..."
 END=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
@@ -28,19 +39,16 @@ LOGS=$(az monitor activity-log list \
   --start-time "$START" --end-time "$END" -o json 2>/dev/null || echo "[]")
 
 # -------------------
-# Collect principals (via MS Graph where needed)
+# Collect principals via Graph API
 # -------------------
-echo "📥 Collecting users..."
-USERS=$(run ad user list)
+echo "📥 Collecting users (Graph API)..."
+USERS=$(graph_collect_all "https://graph.microsoft.com/v1.0/users?\$select=id,displayName,userPrincipalName")
 
-echo "📥 Collecting service principals..."
-SPS=$(run ad sp list)
+echo "📥 Collecting service principals (Graph API)..."
+SPS=$(graph_collect_all "https://graph.microsoft.com/v1.0/servicePrincipals?\$select=id,appId,displayName,appDisplayName")
 
-echo "📥 Collecting groups (via MS Graph)..."
-GROUPS=$(az rest --method GET \
-  --url "https://graph.microsoft.com/v1.0/groups?\$top=999" \
-  --query "value[].{id:id, displayName:displayName}" \
-  -o json 2>/dev/null || echo "[]")
+echo "📥 Collecting groups (Graph API)..."
+GROUPS=$(graph_collect_all "https://graph.microsoft.com/v1.0/groups?\$select=id,displayName")
 
 # -------------------
 # Enrich assignments with principal display names
