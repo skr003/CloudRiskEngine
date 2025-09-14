@@ -28,21 +28,22 @@ graph_collect_all() {
 # -------------------
 echo "📥 Collecting role assignments..."
 ASSIGNMENTS=$(az role assignment list --all -o json 2>/dev/null || echo "[]")
+[[ -z "$ASSIGNMENTS" ]] && ASSIGNMENTS="[]"
 
 echo "📥 Collecting role definitions..."
 ROLE_DEFS=$(az role definition list -o json 2>/dev/null || echo "[]")
+[[ -z "$ROLE_DEFS" ]] && ROLE_DEFS="[]"
 
 # -------------------
-# Collect principals via Graph API
+# Collect principals via Graph API (Users + Service Principals)
 # -------------------
 echo "📥 Collecting users (Graph API)..."
 USERS=$(graph_collect_all "https://graph.microsoft.com/v1.0/users?\$select=id,displayName,userPrincipalName")
+[[ -z "$USERS" ]] && USERS="[]"
 
 echo "📥 Collecting service principals (Graph API)..."
 SPS=$(graph_collect_all "https://graph.microsoft.com/v1.0/servicePrincipals?\$select=id,appId,displayName,appDisplayName")
-
-echo "📥 Collecting groups (Graph API)..."
-#GROUPS=$(graph_collect_all "https://graph.microsoft.com/v1.0/groups?\$select=id,displayName")
+[[ -z "$SPS" ]] && SPS="[]"
 
 # -------------------
 # Enrich assignments with principal display names
@@ -51,8 +52,7 @@ echo "✨ Enriching assignments..."
 ENRICHED=$(jq -n \
   --argjson assignments "$ASSIGNMENTS" \
   --argjson users "$USERS" \
-  --argjson sps "$SPS" \
-  --argjson groups "$GROUPS" '
+  --argjson sps "$SPS" '
   def lookup(pid; arr):
     (arr[] | select(.id == pid) | .displayName // .appDisplayName // .userPrincipalName) // null;
 
@@ -60,7 +60,6 @@ ENRICHED=$(jq -n \
     resourceName:
       (lookup(.principalId; $users)
        // lookup(.principalId; $sps)
-       // lookup(.principalId; $groups)
        // .principalDisplayName
        // .principalName
        // .principalId)
@@ -75,12 +74,16 @@ jq -n \
   --arg collectedAt "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
   --argjson roleAssignments "$ENRICHED" \
   --argjson roleDefinitions "$ROLE_DEFS" \
-  --argjson activityLogs "$LOGS" \
   '{
     collectedAt: $collectedAt,
     roleAssignments: $roleAssignments,
-    roleDefinitions: $roleDefinitions,
-    activityLogs: $activityLogs
+    roleDefinitions: $roleDefinitions
   }' > "$OUTFILE"
 
+# -------------------
+# Sanity counts
+# -------------------
 echo "✅ Collected -> $OUTFILE"
+echo "   Users:   $(echo "$USERS"   | jq 'length')"
+echo "   SPs:     $(echo "$SPS"     | jq 'length')"
+echo "   Assigns: $(echo "$ASSIGNMENTS" | jq 'length')"
