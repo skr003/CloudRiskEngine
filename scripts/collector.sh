@@ -39,10 +39,18 @@ echo "📥 Collecting role definitions..."
 az role definition list -o json 2>/dev/null > "$ROLEDEFS_FILE" || echo "[]" > "$ROLEDEFS_FILE"
 
 echo "📥 Collecting users..."
-graph_collect_all "https://graph.microsoft.com/v1.0/users?\$select=id,displayName,userPrincipalName" > "$USERS_FILE"
+graph_collect_all "https://graph.microsoft.com/v1.0/users?\$select=id,displayName,userPrincipalName" > "$USERS_FILE" || echo "[]" > "$USERS_FILE"
 
 echo "📥 Collecting service principals..."
-graph_collect_all "https://graph.microsoft.com/v1.0/servicePrincipals?\$select=id,appId,displayName,appDisplayName" > "$SPS_FILE"
+graph_collect_all "https://graph.microsoft.com/v1.0/servicePrincipals?\$select=id,appId,displayName,appDisplayName" > "$SPS_FILE" || echo "[]" > "$SPS_FILE"
+
+# Ensure files are valid JSON
+for f in "$USERS_FILE" "$SPS_FILE" "$ASSIGNMENTS_FILE" "$ROLEDEFS_FILE"; do
+  if ! jq empty "$f" >/dev/null 2>&1; then
+    echo "⚠️  $f was invalid, resetting to []"
+    echo "[]" > "$f"
+  fi
+done
 
 # -------------------
 # Enrich assignments with names
