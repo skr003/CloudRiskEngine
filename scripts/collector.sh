@@ -25,13 +25,10 @@ LOGS=$(az monitor activity-log list --start-time "$START" --end-time "$END" -o j
 echo "📥 Collecting principals..."
 USERS=$(run ad user list)
 echo "Users are as below"
-echo "$USERS"
 SPS=$(run ad sp list)
 echo "SPS are as follows"
-echo "$SPS"
 GROUPS=$(run ad group list)
 echo "GROUPS are as follows"
-echo "$GROUPS"
 
 # Enrich role assignments in one jq pass
 echo "✨ Enriching assignments..."
