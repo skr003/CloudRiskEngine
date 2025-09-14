@@ -39,7 +39,7 @@ echo "📥 Collecting role definitions..."
 az role definition list -o json 2>/dev/null > "$ROLEDEFS_FILE" || echo "[]" > "$ROLEDEFS_FILE"
 
 echo "📥 Collecting users..."
-graph_collect_all "https://graph.microsoft.com/v1.0/users?\$select=id,displayName,userPrincipalName" > "$USERS_FILE" || echo "[]" > "$USERS_FILE"
+graph_collect_all "https://graph.microsoft.com/v1.0/users?\$select=id,displayName,onPremisesSamAccountName,mailNickname" > "$USERS_FILE" || echo "[]" > "$USERS_FILE"
 
 echo "📥 Collecting service principals..."
 graph_collect_all "https://graph.microsoft.com/v1.0/servicePrincipals?\$select=id,appId,displayName,appDisplayName" > "$SPS_FILE" || echo "[]" > "$SPS_FILE"
@@ -53,7 +53,7 @@ for f in "$USERS_FILE" "$SPS_FILE" "$ASSIGNMENTS_FILE" "$ROLEDEFS_FILE"; do
 done
 
 # -------------------
-# Enrich assignments with names
+# Enrich assignments with usernames
 # -------------------
 echo "✨ Enriching assignments..."
 jq -n \
@@ -61,12 +61,15 @@ jq -n \
   --slurpfile users "$USERS_FILE" \
   --slurpfile sps "$SPS_FILE" '
   def lookup(pid; arr):
-    (arr[] | select(.id == pid) | .displayName // .appDisplayName // .userPrincipalName) // null;
+    (arr[] | select(.id == pid) |
+      .onPremisesSamAccountName
+      // .mailNickname
+      // .displayName) // null;
 
   [$assignments[0][] | . + {
     resourceName:
       (lookup(.principalId; $users[0])
-       // lookup(.principalId; $sps[0])
+       // (arr = $sps[0]; arr[] | select(.id == .principalId) | .displayName // .appDisplayName)
        // .principalDisplayName
        // .principalName
        // .principalId)
