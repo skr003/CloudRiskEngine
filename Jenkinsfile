@@ -5,7 +5,7 @@ pipeline {
   }
   stages {
     stage('Collect Azure Data') {
-      steps { sh 'python3 scripts/collector.py' }
+      steps { sh './scripts/collector.sh' }
     }
     stage('Analyze Drift') {
       steps { sh 'python3 scripts/analyze_drift.py' }
