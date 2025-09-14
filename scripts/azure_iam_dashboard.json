@@ -1,0 +1,98 @@
+{
+  "id": null,
+  "uid": "azure-iam-dashboard",
+  "title": "Azure IAM Overview",
+  "tags": ["azure", "iam", "mitre", "security"],
+  "timezone": "browser",
+  "schemaVersion": 36,
+  "version": 1,
+  "refresh": "30s",
+  "panels": [
+    {
+      "type": "table",
+      "title": "Users",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "azure-users-ds"
+      },
+      "targets": [
+        {
+          "format": "json",
+          "url": "/var/lib/grafana/dashboards/output/azure_users.json",
+          "refId": "A",
+          "dataPath": "",
+          "rootSelector": ""
+        }
+      ],
+      "options": {
+        "showHeader": true
+      }
+    },
+    {
+      "type": "table",
+      "title": "Groups",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "azure-groups-ds"
+      },
+      "targets": [
+        {
+          "format": "json",
+          "url": "/var/lib/grafana/dashboards/output/azure_groups.json",
+          "refId": "B"
+        }
+      ],
+      "options": {
+        "showHeader": true
+      }
+    },
+    {
+      "type": "table",
+      "title": "Role Assignments",
+      "gridPos": { "x": 0, "y": 8, "w": 24, "h": 10 },
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "azure-assignments-ds"
+      },
+      "targets": [
+        {
+          "format": "json",
+          "url": "/var/lib/grafana/dashboards/output/azure_role_assignments.json",
+          "refId": "C"
+        }
+      ],
+      "options": {
+        "showHeader": true
+      }
+    },
+    {
+      "type": "graph",
+      "title": "Assignments by Role",
+      "gridPos": { "x": 0, "y": 18, "w": 24, "h": 10 },
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "azure-assignments-ds"
+      },
+      "targets": [
+        {
+          "format": "json",
+          "url": "/var/lib/grafana/dashboards/output/azure_role_assignments.json",
+          "refId": "D",
+          "dataPath": ""
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "show": true },
+        "tooltip": { "shared": true }
+      }
+    }
+  ]
+}
