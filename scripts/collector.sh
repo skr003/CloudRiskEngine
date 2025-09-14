@@ -39,11 +39,11 @@ ROLE_DEFS=$(az role definition list -o json 2>/dev/null || echo "[]")
 # -------------------
 echo "📥 Collecting users (Graph API)..."
 USERS=$(graph_collect_all "https://graph.microsoft.com/v1.0/users?\$select=id,displayName,userPrincipalName")
-[[ -z "$USERS" ]] && USERS="[]"
+[[ -z "$USERS" || "$USERS" == "null" ]] && USERS="[]"
 
 echo "📥 Collecting service principals (Graph API)..."
 SPS=$(graph_collect_all "https://graph.microsoft.com/v1.0/servicePrincipals?\$select=id,appId,displayName,appDisplayName")
-[[ -z "$SPS" ]] && SPS="[]"
+[[ -z "$SPS" || "$SPS" == "null" ]] && SPS="[]"
 
 # -------------------
 # Enrich assignments with principal display names
