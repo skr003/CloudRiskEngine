@@ -11,7 +11,6 @@ pipeline {
         '''
     }
     }
-  }
     stage('Analyze Drift') {
       steps { sh 'python3 scripts/analyze_drift.py' }
     }
