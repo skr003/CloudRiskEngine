@@ -22,12 +22,16 @@ collect_role_definitions() {
 
 collect_activity_logs() {
   local days="${1:-7}"
-  local end start timespan
+  local end start
   end=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
   start=$(date -u -d "$days days ago" +"%Y-%m-%dT%H:%M:%SZ")
-  timespan="$start/$end"
-  run az monitor activity-log list --timespan "$timespan" -o json
+
+  az monitor activity-log list \
+    --start-time "$start" \
+    --end-time "$end" \
+    -o json
 }
+
 
 resolve_principal_name() {
   local pid="$1"
