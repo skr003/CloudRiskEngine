@@ -42,7 +42,7 @@ pipeline {
         stage('Threat Intelligence Mapping') {
             steps {
                 sh '''
-                bash scripts/map_mitre.sh
+                python3 scripts/map_mitre.py
                 '''
             }
         }
