@@ -6,7 +6,7 @@ pipeline {
   stages {
     stage('Collect Azure Data') {
       steps { sh '''
-          mkdir output
+          mkdir -p output
           chmod +x scripts/collector.sh
           ./scripts/collector.sh
         '''
