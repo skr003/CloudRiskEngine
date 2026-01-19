@@ -3,7 +3,7 @@ set -euo pipefail
 
 NEO4J_URI="bolt://localhost:7687"
 NEO4J_USER="neo4j"
-NEO4J_PASS="test123"
+NEO4J_PASS="Admin@123$%^"
 
 ROLE_FILE="output/role_definitions.json"
 ASSIGN_FILE="output/role_assignments.json"
