@@ -8,6 +8,9 @@ mkdir -p $OUTPUT_DIR
 # The assignment list contains the Role Name needed for the graph.
 # Downloading definitions is only necessary if you need to map specific permissions (Actions/NotActions).
 
+echo "[*] Collecting Azure IAM Role Definitions..."
+az role definition list --output json > $OUTPUT_DIR/role_definitions.json
+
 echo "[*] Collecting Role Assignments (All Users)..."
 # Optimization 2: Use --all to ensure we get everything, but output is standard
 az role assignment list --all --output json > $OUTPUT_DIR/role_assignments.json
