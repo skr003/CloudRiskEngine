@@ -4,7 +4,7 @@ set -euo pipefail
 NEO4J_URI="bolt://localhost:7687"
 NEO4J_USER="neo4j"
 NEO4J_PASS="Admin@123$%^"
-INPUT_MAPPING="output/mitre_matches.json"
+INPUT_MAPPING="output/mitre_mapping.json"
 OUTPUT_RESULT="output/mitre_mapping_with_name.json"
 
 # --- Part 1: Import TTPs into Neo4j ---
