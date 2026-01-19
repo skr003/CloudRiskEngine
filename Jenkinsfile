@@ -62,20 +62,6 @@ pipeline {
                 '''
             }
         }
-
-        stage('Post-Check: Auto-Remediation Approval') {
-            steps {
-                script {
-                    def risky = sh(script: "grep -c 'Owner\\|Contributor' output/risk_scores.csv || true", returnStdout: true).trim()
-                    if (risky != "0") {
-                        echo "⚠️ Risky assignments found. Approving auto-remediation..."
-                        sh "bash output/remediation.sh"
-                    } else {
-                        echo "✅ No risky assignments found. Skipping remediation."
-                    }
-                }
-            }
-        }
     }
 
     post {
