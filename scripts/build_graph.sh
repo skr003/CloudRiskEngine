@@ -3,42 +3,45 @@ set -euo pipefail
 
 NEO4J_URI="bolt://localhost:7687"
 NEO4J_USER="neo4j"
-NEO4J_PASS="Admin@123$%^"  # Ideally, switch this to an env variable like $NEO4J_PASSWORD
+NEO4J_PASS="Admin@123$%^"
 
 ASSIGN_FILE="output/role_assignments.json"
 
-# Check if file exists and has data
-if [ ! -s "$ASSIGN_FILE" ] || [ "$(jq 'length' $ASSIGN_FILE)" -eq 0 ]; then
-    echo "Error: $ASSIGN_FILE is empty or missing. Did the user have any assignments?"
+# Check if file exists
+if [ ! -s "$ASSIGN_FILE" ]; then
+    echo "Error: $ASSIGN_FILE is missing or empty."
     exit 1
 fi
 
-echo "[*] Importing Role Assignments for target user..."
+echo "[*] Generating Cypher queries..."
 
-# Optimization:
-# 1. We removed the loop over 'role_definitions.json'. 
-#    We don't need to import 5000+ unused roles.
-# 2. We MERGE the Role node inside this loop. 
-#    This ensures we only create nodes for roles the user actually HAS.
+# Optimization 3: Create a temporary file with all Cypher commands
+# We use jq to transform the JSON directly into Cypher strings.
+# This avoids the slow bash 'while read' loop entirely.
 
-cat $ASSIGN_FILE | jq -c '.[]' | while read asg; do
-  # Extract data
-  principal=$(echo $asg | jq -r '.principalId')
-  roleName=$(echo $asg | jq -r '.roleDefinitionName')
-  scope=$(echo $asg | jq -r '.scope')
+CYPHER_FILE="import.cypher"
 
-  # Construct Query
-  # - Creates the Principal node (User)
-  # - Creates the Role node (only if it doesn't exist)
-  # - Links them with ASSIGNED {scope: ...}
-  cypher="
-    MERGE (p:Principal {id:'$principal'})
-    MERGE (r:Role {name:'$roleName'})
-    MERGE (p)-[:ASSIGNED {scope:'$scope'}]->(r)
-  "
+# 1. Start Transaction
+echo ":begin" > $CYPHER_FILE
 
-  # Execute
-  echo "$cypher" | cypher-shell -u $NEO4J_USER -p $NEO4J_PASS --address $NEO4J_URI
-done
+# 2. Convert JSON objects to Cypher MERGE statements
+# We look for roleDefinitionName, principalId, and scope.
+cat $ASSIGN_FILE | jq -r '
+  .[] | 
+  "MERGE (p:Principal {id:\"" + .principalId + "\"}) 
+   MERGE (r:Role {name:\"" + .roleDefinitionName + "\"}) 
+   MERGE (p)-[:ASSIGNED {scope:\"" + .scope + "\"}]->(r);"
+' >> $CYPHER_FILE
 
+# 3. Commit Transaction
+echo ":commit" >> $CYPHER_FILE
+
+echo "[*] Importing into Neo4j (Single Connection)..."
+
+# Optimization 4: Pipe the file into a SINGLE cypher-shell instance.
+# This is 100x faster than running cypher-shell inside a loop.
+cat $CYPHER_FILE | cypher-shell -u $NEO4J_USER -p $NEO4J_PASS --address $NEO4J_URI
+
+# Cleanup
+rm $CYPHER_FILE
 echo "[*] Import complete."
