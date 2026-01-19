@@ -4,7 +4,7 @@ set -euo pipefail
 NEO4J_URI="bolt://localhost:7687"
 NEO4J_USER="neo4j"
 NEO4J_PASS="Admin@123$%^"
-MAPPING_FILE="output/mitre_mapping_with_name.json"
+MAPPING_FILE="output/mitre_mapping.json"
 
 if [ ! -f "$MAPPING_FILE" ]; then
     echo "Error: $MAPPING_FILE not found. Run map_mitre.py first."
