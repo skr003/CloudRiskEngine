@@ -43,7 +43,7 @@ pipeline {
             steps {
                 sh '''
                 python3 scripts/map_mitre.py
-                bash scripts/import_mitre.sh
+                #bash scripts/import_mitre.sh
                 '''
             }
         }
