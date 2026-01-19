@@ -11,4 +11,4 @@ echo "[*] Collecting Role Assignments..."
 az role assignment list --all --output json > $OUTPUT_DIR/role_assignments.json
 
 echo "[*] Collecting Activity Logs (last 30 days)..."
-az monitor activity-log list --max-events 1000 --output json > $OUTPUT_DIR/activity_logs.json
+az monitor activity-log list --max-events 10 --output json > $OUTPUT_DIR/activity_logs.json
