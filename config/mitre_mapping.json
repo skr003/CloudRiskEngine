@@ -1,0 +1,18 @@
+{
+  "Microsoft.Authorization/roleAssignments/write": "T1098",
+  "Microsoft.Authorization/roleDefinitions/write": "T1098",
+  "Microsoft.Authorization/permissions/read": "T1087.004",
+  "Microsoft.Compute/virtualMachines/extensions/write": "T1059",
+  "Microsoft.Compute/virtualMachines/runCommand/action": "T1059",
+  "Microsoft.Compute/virtualMachines/resetPassword/action": "T1098",
+  "Microsoft.Directory/servicePrincipals/credentials/write": "T1556",
+  "Microsoft.KeyVault/vaults/accessPolicies/write": "T1556",
+  "Microsoft.Network/networkSecurityGroups/write": "T1562.001",
+  "Microsoft.Network/networkSecurityGroups/join/action": "T1562.001",
+  "Microsoft.Resources/deployments/write": "T1548.003",
+  "Microsoft.Web/sites/publishxml/action": "T1505.003",
+  "Microsoft.Web/sites/config/list/action": "T1552.001",
+  "Microsoft.Automation/automationAccounts/runbooks/write": "T1059",
+  "Microsoft.ManagedIdentity/userAssignedIdentities/assign/action": "T1078.004",
+  "Microsoft.Storage/storageAccounts/listKeys/action": "T1552.001"
+}
