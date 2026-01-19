@@ -42,6 +42,7 @@ pipeline {
         stage('Threat Intelligence Mapping') {
             steps {
                 sh '''
+                set -x
                 bash scripts/map_mitre.sh
                 '''
             }
