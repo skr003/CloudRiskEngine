@@ -18,7 +18,7 @@ pipeline {
         stage('Collect IAM & Logs') {
             steps {
                 sh '''
-                bash scripts/collect_iam_data.sh sudharshankr003@gmail.com
+                bash scripts/collect_iam_data.sh Sudharshan
                 '''
             }
         }
