@@ -3,7 +3,7 @@ set -euo pipefail
 
 NEO4J_URI="bolt://localhost:7687"
 NEO4J_USER="neo4j"
-NEO4J_PASS="test123"
+NEO4J_PASS="Admin@123$%^"
 
 echo "[*] Detecting Privilege Escalation Paths..."
 cypher-shell -u $NEO4J_USER -p $NEO4J_PASS --address $NEO4J_URI "
