@@ -4,7 +4,7 @@ pipeline {
 
     environment {
         // Credentials binding for Neo4j Password
-        NEO4J_PASSWORD = credentials('neo4j-db-password') 
+        // NEO4J_PASSWORD = credentials('neo4j-db-password') 
         
         // Azure Credentials 
         // Ensure you have these bound in your Jenkins credentials if not using a global SP
