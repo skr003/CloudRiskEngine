@@ -23,7 +23,7 @@ pipeline {
         stage('Setup Dependencies') {
             steps {
                 // Windows typically uses 'pip' and 'python' rather than 'pip3'/'python3'
-                bat 'pip install -r requirements.txt'
+                bat 'python -m pip install -r requirements.txt'
             }
         }
 
