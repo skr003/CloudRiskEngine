@@ -23,7 +23,7 @@ pipeline {
         stage('Setup Dependencies') {
             steps {
                 // Windows typically uses 'pip' and 'python' rather than 'pip3'/'python3'
-                bat 'C:/Users/admin/AppData/Local/Programs/Python/Python312/python.exe -m pip install -r scripts/requirements.txt'
+                bat 'C:/Users/admin/AppData/Local/Programs/Python/Python312/Scripts/pip.exe install -r scripts/requirements.txt'
             }
         }
 
