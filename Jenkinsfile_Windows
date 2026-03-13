@@ -1,0 +1,88 @@
+pipeline {
+    // Optionally specify a Windows node if you have a mixed environment: agent { label 'windows' }
+    agent any
+
+    environment {
+        // Credentials binding for Neo4j Password
+        NEO4J_PASSWORD = credentials('neo4j-db-password') 
+        
+        // Azure Credentials 
+        // Ensure you have these bound in your Jenkins credentials if not using a global SP
+        // AZURE_CLIENT_ID = credentials('azure-client-id')
+        // AZURE_CLIENT_SECRET = credentials('azure-client-secret')
+        // AZURE_TENANT_ID = credentials('azure-tenant-id')
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Setup Dependencies') {
+            steps {
+                // Windows typically uses 'pip' and 'python' rather than 'pip3'/'python3'
+                bat 'pip install -r requirements.txt'
+            }
+        }
+
+        stage('Cloud Data Collector') {
+            steps {
+                script {
+                    echo "Logging into Azure..."
+                    // Use %VAR% syntax for environment variables in Windows batch scripts
+                    bat 'az login --service-principal -u "%AZURE_CLIENT_ID%" -p "%AZURE_CLIENT_SECRET%" --tenant "%AZURE_TENANT_ID%"'
+                    
+                    echo "Running Collector Module..."
+                    // Calls bash explicitly. Ensure Git Bash is in your Windows PATH.
+                    bat 'bash scripts/collect_iam_data.sh'
+                }
+            }
+        }
+
+        stage('Privilege Analysis (Graph Build)') {
+            steps {
+                script {
+                    echo "Building Neo4j Graph..."
+                    bat 'bash scripts/build_graph.sh'
+                }
+            }
+        }
+
+        stage('Threat Intel Mapping') {
+            steps {
+                script {
+                    echo "Mapping MITRE TTPs..."
+                    bat 'python scripts/map_mitre.py'
+                    
+                    echo "Importing TTPs to Graph..."
+                    bat 'bash scripts/import_mitre.sh'
+                }
+            }
+        }
+
+        stage('Remediation & Reporting') {
+            steps {
+                script {
+                    echo "Generating Remediation Plans..."
+                    bat 'python scripts/remediation.py'
+                }
+            }
+        }
+        
+        stage('Deploy Dashboard') {
+            steps {
+                echo "Dashboard is ready. Open a terminal and run: streamlit run dashboard/app.py"
+            }
+        }
+    }
+
+    post {
+        always {
+            // Uses backslashes for Windows artifact paths
+            archiveArtifacts artifacts: 'output\\*.*', allowEmptyArchive: true
+            cleanWs()
+        }
+    }
+}
