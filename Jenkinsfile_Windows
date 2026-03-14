@@ -50,7 +50,7 @@ pipeline {
             
                     echo "Uploading to Neo4j via Python Driver..."
                     // Execute the import using the driver installed in your Python environment
-                    bat 'C:/Users/admin/AppData/Local/Programs/Python/Python312/python.exe" scripts/load_to_neo4j.py'
+                    bat '"C:/Users/admin/AppData/Local/Programs/Python/Python312/python.exe" scripts/load_to_neo4j.py'
             
                     // Cleanup
                     bat 'del import.cypher'
