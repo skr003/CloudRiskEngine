@@ -19,7 +19,7 @@ pipeline {
             }
         }
 
-        stage('1. Azure Cloud') {
+        stage('1. Login to Azure Cloud') {
             steps {
                 script {
                     echo "[*] Connecting to Azure Cloud Environment..."
