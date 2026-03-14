@@ -1,38 +1,32 @@
 import sys
 import os
-import dotenv
 from neo4j import GraphDatabase
 
-# 1. UPDATE THIS LINE with the exact name of your NEW downloaded .txt file
-ENV_FILE = "scripts/Neo4j-a7c4fec6-Created-2026-03-14.txt"
+# 1. HARDCODE YOUR CREDENTIALS HERE
+# Using bolt+ssc bypasses both routing errors and Windows SSL certificate issues
+URI = "bolt+ssc://a7c4fec6.databases.neo4j.io" 
+USER = "neo4j"
+PASS = "PASTE_YOUR_NEW_PASSWORD_HERE" 
+
 CYPHER_FILE = "import.cypher"
 
 def run_import():
-    # Load the new credentials
-    if not dotenv.load_dotenv(ENV_FILE):
-        print(f"[-] Error: Could not load Aura environment file: {ENV_FILE}")
-        sys.exit(1)
-
-    # Automatically bypass routing using the bolt+s:// trick
-    raw_uri = os.getenv("NEO4J_URI")
-    URI = raw_uri.replace("neo4j+s://", "bolt+s://") 
-    AUTH = (os.getenv("NEO4J_USERNAME"), os.getenv("NEO4J_PASSWORD"))
-
     if not os.path.exists(CYPHER_FILE):
         print(f"[-] Error: {CYPHER_FILE} not found.")
         sys.exit(1)
 
-    print(f"[*] Connecting directly via Bolt to new instance: {URI}...")
+    print(f"[*] Connecting securely to new Aura instance: {URI}...")
     
-    driver = GraphDatabase.driver(URI, auth=AUTH)
+    # Initialize the driver
+    driver = GraphDatabase.driver(URI, auth=(USER, PASS))
     
     try:
         driver.verify_connectivity()
-        print("[+] Connection established successfully.")
+        print("[+] Authentication Successful!")
         
-        # Use the default session to avoid 'DatabaseNotFound' errors
+        # Open session without naming the database (required for Aura)
         with driver.session() as session:
-            print("[*] Wiping old data from Aura...")
+            print("[*] Wiping old data...")
             session.run("MATCH (n) DETACH DELETE n")
 
             with open(CYPHER_FILE, 'r') as f:
@@ -43,7 +37,7 @@ def run_import():
                 for query in queries:
                     tx.run(query)
                 
-            print("[+] Success! Cloud risk graph updated on AuraDB Professional.")
+            print("[+] Success! Cloud risk graph updated on AuraDB.")
             
     except Exception as e:
         print(f"[-] FATAL ERROR: {e}")
