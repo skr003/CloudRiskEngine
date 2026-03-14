@@ -84,7 +84,7 @@ pipeline {
                 script {
                     echo "[*] Generating Heatmaps and updating Web UI..."
                     // 1. Clear any old streamlit processes to prevent port conflicts (Port 8501)
-                    bat "taskkill /F /IM python.exe /T /FI \"WINDOWTITLE eq streamlit*\" 2>NUL || echo No existing dashboard found."
+                    bat "taskkill /F /IM "C:/Users/admin/AppData/Local/Programs/Python/Python312/python.exe" /T /FI \"WINDOWTITLE eq streamlit*\" 2>NUL || echo No existing dashboard found."
             
                     // 2. Launch with a temporary log file to catch startup errors
                     bat 'start /B "" "C:/Users/admin/AppData/Local/Programs/Python/Python312/python.exe" -m streamlit run dashboard/app.py --server.port 8501 --server.headless true --browser.gatherUsageStats false > streamlit_start.log 2>&1'
