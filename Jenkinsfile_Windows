@@ -83,10 +83,16 @@ pipeline {
             steps {
                 script {
                     echo "[*] Generating Heatmaps and updating Web UI..."
-                    // Placeholder: Deploying/Updating your Streamlit or Grafana dashboard
-                    //bat '"C:/Users/admin/AppData/Local/Programs/Python/Python312/Scripts/streamlit" run dashboard/app.py' 
-                    //bat '"C:/Users/admin/AppData/Local/Programs/Python/Python312/python.exe" -m streamlit run dashboard/app.py --server.headless true --browser.gatherUsageStats false'
-                    bat 'start /B "" "C:/Users/admin/AppData/Local/Programs/Python/Python312/python.exe" -m streamlit run dashboard/app.py --server.headless true --browser.gatherUsageStats false > NUL 2>&1'                }
+                    // 1. Clear any old streamlit processes to prevent port conflicts (Port 8501)
+                    bat "taskkill /F /IM python.exe /T /FI \"WINDOWTITLE eq streamlit*\" 2>NUL || echo No existing dashboard found."
+            
+                    // 2. Launch with a temporary log file to catch startup errors
+                    bat 'start /B "" "C:/Users/admin/AppData/Local/Programs/Python/Python312/python.exe" -m streamlit run dashboard/app.py --server.port 8501 --server.headless true --browser.gatherUsageStats false > streamlit_start.log 2>&1'
+            
+                    // 3. Wait for the server to bind to the port
+                    echo "[*] Initializing server..."
+                    sleep 15
+                }
             }
         }
     }
