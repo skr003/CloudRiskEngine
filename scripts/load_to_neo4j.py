@@ -3,37 +3,35 @@ import os
 import dotenv
 from neo4j import GraphDatabase
 
-# 1. Load credentials directly from the Aura text file as the docs recommend
-# Replace this filename with your actual downloaded file name
-ENV_FILE = "scripts/Neo4j-a7c4fec6-Created-2026-03-14.txt"
+# 1. UPDATE THIS LINE with the exact name of your NEW downloaded .txt file
+ENV_FILE = "scripts/Neo4j-a7c4fec6-Created-YOUR-DATE-HERE.txt"
 CYPHER_FILE = "import.cypher"
 
 def run_import():
+    # Load the new credentials
     if not dotenv.load_dotenv(ENV_FILE):
         print(f"[-] Error: Could not load Aura environment file: {ENV_FILE}")
         sys.exit(1)
 
-    # 2. Extract and modify the URI to bypass the routing table
-    # We replace 'neo4j+s' with 'bolt+s' as per the official docs
+    # Automatically bypass routing using the bolt+s:// trick
     raw_uri = os.getenv("NEO4J_URI")
     URI = raw_uri.replace("neo4j+s://", "bolt+s://") 
-    
     AUTH = (os.getenv("NEO4J_USERNAME"), os.getenv("NEO4J_PASSWORD"))
 
     if not os.path.exists(CYPHER_FILE):
         print(f"[-] Error: {CYPHER_FILE} not found.")
         sys.exit(1)
 
-    print(f"[*] Connecting directly via Bolt to bypass routing: {URI}...")
+    print(f"[*] Connecting directly via Bolt to new instance: {URI}...")
     
-    # 3. Create Driver and Verify Connectivity (as shown in the docs)
     driver = GraphDatabase.driver(URI, auth=AUTH)
     
     try:
         driver.verify_connectivity()
         print("[+] Connection established successfully.")
         
-        with driver.session(database="neo4j") as session:
+        # Use the default session to avoid 'DatabaseNotFound' errors
+        with driver.session() as session:
             print("[*] Wiping old data from Aura...")
             session.run("MATCH (n) DETACH DELETE n")
 
@@ -45,7 +43,7 @@ def run_import():
                 for query in queries:
                     tx.run(query)
                 
-            print("[+] Success! Cloud risk graph updated.")
+            print("[+] Success! Cloud risk graph updated on AuraDB Professional.")
             
     except Exception as e:
         print(f"[-] FATAL ERROR: {e}")
