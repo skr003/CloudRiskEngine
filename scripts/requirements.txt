@@ -3,3 +3,4 @@ networkx
 neo4j 
 matplotlib 
 pandas
+cypher-shell
