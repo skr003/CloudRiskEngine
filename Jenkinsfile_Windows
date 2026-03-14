@@ -36,7 +36,7 @@ pipeline {
                     
                     echo "Running Collector Module..."
                     // Calls bash explicitly. Ensure Git Bash is in your Windows PATH.
-                    bat 'C:/Program Files/Git/bin/sh.exe scripts/collect_iam_data.sh'
+                    bat '"C:/Program Files/Git/bin/sh.exe" scripts/collect_iam_data.sh'
                 }
             }
         }
