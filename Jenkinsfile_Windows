@@ -11,6 +11,10 @@ pipeline {
         AZURE_CLIENT_SECRET = credentials('AZURE_CLIENT_SECRET')
         AZURE_TENANT_ID = credentials('AZURE_TENANT_ID')
     }
+    
+    parameters {
+        string(name: 'ADMIN_EMAIL', defaultValue: 'sudharshan@example.com', description: 'Email address to receive Cloud Risk alerts')
+    }
 
     stages {
         stage('Setup Dependencies') {
@@ -81,7 +85,8 @@ pipeline {
                     echo "[*] Generating Heatmaps and updating Web UI..."
                     // Placeholder: Deploying/Updating your Streamlit or Grafana dashboard
                     //bat '"C:/Users/admin/AppData/Local/Programs/Python/Python312/Scripts/streamlit" run dashboard/app.py' 
-                    bat 'start /B "C:/Users/admin/AppData/Local/Programs/Python/Python312/python.exe" -m streamlit run dashboard/app.py --server.headless true --browser.gatherUsageStats false'
+                    bat '"C:/Users/admin/AppData/Local/Programs/Python/Python312/python.exe" -m streamlit run dashboard/app.py --server.headless true --browser.gatherUsageStats false'
+                    //bat 'start /B "C:/Users/admin/AppData/Local/Programs/Python/Python312/python.exe" -m streamlit run dashboard/app.py --server.headless true --browser.gatherUsageStats false'
                 }
             }
         }
