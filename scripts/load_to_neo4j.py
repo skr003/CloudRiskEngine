@@ -2,37 +2,43 @@ import sys
 import os
 from neo4j import GraphDatabase
 
-# Using 127.0.0.1 is more stable for Neo4j Desktop on Windows than 'localhost'
+# CRITICAL: Must start with 'bolt://' or 'neo4j://'
 URI = "bolt://127.0.0.1:7687" 
 USER = "neo4j"
-PASS = "Admin@123$%^" # Ensure this matches the password you set in Neo4j Desktop
+PASS = "Admin@123$%^" 
 CYPHER_FILE = "import.cypher"
 
 def run_import():
     if not os.path.exists(CYPHER_FILE):
-        print(f"Error: {CYPHER_FILE} not found.")
+        print(f"[-] Error: {CYPHER_FILE} not found.")
         sys.exit(1)
 
-    # The driver initiation
     driver = GraphDatabase.driver(URI, auth=(USER, PASS))
     try:
         with driver.session() as session:
+            # 1. Clear existing data to prevent duplicates
+            print("[*] Wiping old graph data...")
+            session.run("MATCH (n) DETACH DELETE n")
+
+            # 2. Load the new data
             with open(CYPHER_FILE, 'r') as f:
-                # We split by semicolon but ignore the :begin/:commit lines 
-                # because the Python driver handles transactions natively
+                # Filter out lines like ':begin' or ':commit' which are for cypher-shell
                 queries = [q.strip() for q in f.read().split(';') if q.strip() and not q.startswith(':')]
                 
-                print(f"[*] Connection successful. Found {len(queries)} queries.")
+            print(f"[*] Connection successful. Executing {len(queries)} queries...")
+            
+            with session.begin_transaction() as tx:
+                for query in queries:
+                    tx.run(query)
                 
-                # We wrap everything in one transaction for speed
-                with session.begin_transaction() as tx:
-                    for query in queries:
-                        tx.run(query)
-                
-        print("[+] Graph successfully updated in Neo4j Desktop!")
+            # 3. Quick verification count
+            result = session.run("MATCH (n) RETURN count(n) AS count")
+            count = result.single()["count"]
+            print(f"[+] Success! Graph updated with {count} nodes.")
+
     except Exception as e:
         print(f"[-] Connection Failed: {e}")
-        print("TIP: Make sure the 'Start' button is clicked in Neo4j Desktop.")
+        print("TIP: Make sure the 'Start' button (Green) is clicked in Neo4j Desktop.")
         sys.exit(1)
     finally:
         driver.close()
