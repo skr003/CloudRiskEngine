@@ -4,7 +4,7 @@ import dotenv
 from neo4j import GraphDatabase
 
 # 1. UPDATE THIS LINE with the exact name of your NEW downloaded .txt file
-ENV_FILE = "scripts/Neo4j-a7c4fec6-Created-YOUR-DATE-HERE.txt"
+ENV_FILE = "scripts/Neo4j-a7c4fec6-Created-2026-03-14.txt"
 CYPHER_FILE = "import.cypher"
 
 def run_import():
