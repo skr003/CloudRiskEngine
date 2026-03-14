@@ -3,7 +3,7 @@ import os
 from neo4j import GraphDatabase
 
 # Using 127.0.0.1 is more stable for Neo4j Desktop on Windows than 'localhost'
-URI = "localhost:7687" 
+URI = "bolt://127.0.0.1:7687" 
 USER = "neo4j"
 PASS = "Admin@123$%^" # Ensure this matches the password you set in Neo4j Desktop
 CYPHER_FILE = "import.cypher"
