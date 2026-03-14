@@ -62,10 +62,10 @@ pipeline {
             steps {
                 script {
                     echo "Mapping MITRE TTPs..."
-                    bat 'python scripts/map_mitre.py'
+                    bat '"C:/Users/admin/AppData/Local/Programs/Python/Python312/python.exe" scripts/map_mitre.py'
                     
                     echo "Importing TTPs to Graph..."
-                    bat 'bash scripts/import_mitre.sh'
+                    bat '"C:/Users/admin/AppData/Local/Programs/Python/Python312/python.exe" scripts/import_mitre.sh'
                 }
             }
         }
@@ -74,7 +74,7 @@ pipeline {
             steps {
                 script {
                     echo "Generating Remediation Plans..."
-                    bat 'python scripts/remediation.py'
+                    bat '"C:/Users/admin/AppData/Local/Programs/Python/Python312/python.exe" scripts/remediation.py'
                 }
             }
         }
