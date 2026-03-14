@@ -52,7 +52,7 @@ pipeline {
             }
         }
 
-        stage('5. Remediation Engine') {
+        stage('4. Remediation Engine') {
             steps {
                 script {
                     echo "[*] Generating Least Privilege Suggestions & Policy-as-Code..."
@@ -62,7 +62,7 @@ pipeline {
             }
         }
 
-        stage('6. Threat Intelligence / MITRE Mapping Engine') {
+        stage('5. Threat Intelligence / MITRE Mapping Engine') {
             steps {
                 script {
                     echo "[*] Mapping activities to known TTPs in the Graph..."
