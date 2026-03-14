@@ -18,7 +18,7 @@ fi
 echo "[*] [Module 3] Importing TTP Nodes..."
 
 # 1. Generate Cypher for Import
-cat $INPUT_MAPPING | jq -r '
+cat $INPUT_MAPPING | "C:\Program Files\jq\jq.exe" -r '
   .[] | 
   "MERGE (r:Role {name:\"" + .role + "\"}) " +
   "MERGE (t:TTP {id:\"" + .ttp + "\"}) " +
