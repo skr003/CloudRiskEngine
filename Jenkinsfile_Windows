@@ -45,7 +45,7 @@ pipeline {
             steps {
                 script {
                     echo "Building Neo4j Graph..."
-                    bat 'bash scripts/build_graph.sh'
+                    bat '"C:/Program Files/Git/bin/sh.exe" scripts/build_graph.sh'
                 }
             }
         }
