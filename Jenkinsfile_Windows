@@ -90,7 +90,8 @@ pipeline {
         always {
             // Uses backslashes for Windows artifact paths
             archiveArtifacts artifacts: 'output\\*.*', allowEmptyArchive: true
-            cleanWs()
+            sleep(time: 2, unit: 'SECONDS') 
+            cleanWs(disableDeferredWipeout: true, deleteDirs: true)
         }
     }
 }
