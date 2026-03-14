@@ -1,9 +1,11 @@
-azure-cli
-networkx
-neo4j 
-matplotlib 
-pandas
-cypher-shell
+# Database Connection
 neo4j>=5.14.1
 python-dotenv>=1.0.0
+
+# Dashboard & UI
 streamlit>=1.31.0
+
+# Data Processing & Graph Analytics (for Stage 6 Dashboard)
+pandas
+networkx
+matplotlib
