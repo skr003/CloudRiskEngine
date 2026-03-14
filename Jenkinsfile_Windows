@@ -66,6 +66,7 @@ pipeline {
             steps {
                 script {
                     echo "[*] Mapping activities to known TTPs in the Graph..."
+                    bat '"C:/Users/admin/AppData/Local/Programs/Python/Python312/python.exe" scripts/map_mitre.py'
                     bat '"C:/Program Files/Git/bin/sh.exe" scripts/import_mitre.sh'
                     bat '"C:/Users/admin/AppData/Local/Programs/Python/Python312/python.exe" scripts/load_mitre.py'
                     
