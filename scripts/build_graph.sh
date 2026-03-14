@@ -36,7 +36,7 @@ EOF
 )
 
 # Now run jq using that variable
-cat "$ASSIGN_FILE" | C:\Program Files\jq\jq.exe -r "$FILTER_QUERY" >> "$CYPHER_FILE"
+cat "$ASSIGN_FILE" | "C:\Program Files\jq\jq.exe" -r "$FILTER_QUERY" >> "$CYPHER_FILE"
 
 
 # 3. Commit Transaction
