@@ -4,7 +4,7 @@ from neo4j import GraphDatabase
 # --- AURA DB CONNECTION ---
 URI = "bolt+ssc://a7c4fec6.databases.neo4j.io" 
 USER = "neo4j"
-PASS = "PASTE_YOUR_NEW_PASSWORD_HERE"
+PASS = "pUTM7SqI9HE6H8awExoZK2PKEHznG2sIMFYEaibOwY8" 
 
 st.set_page_config(page_title="Cloud Risk Engine", layout="wide")
 st.title("🛡️ Cloud Risk Engine Dashboard")
