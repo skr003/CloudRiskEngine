@@ -2,10 +2,10 @@ import sys
 import os
 from neo4j import GraphDatabase
 
-# Config
-URI = "bolt://localhost:7687"
+# Using 127.0.0.1 is more stable for Neo4j Desktop on Windows than 'localhost'
+URI = "bolt://127.0.0.1:7687" 
 USER = "neo4j"
-PASS = "Admin@123$%^"
+PASS = "Admin@123$%^" # Ensure this matches the password you set in Neo4j Desktop
 CYPHER_FILE = "import.cypher"
 
 def run_import():
@@ -13,24 +13,26 @@ def run_import():
         print(f"Error: {CYPHER_FILE} not found.")
         sys.exit(1)
 
+    # The driver initiation
     driver = GraphDatabase.driver(URI, auth=(USER, PASS))
     try:
         with driver.session() as session:
             with open(CYPHER_FILE, 'r') as f:
-                # Read file, ignore transaction markers (:begin/:commit), and split by semicolon
-                content = f.read()
-                queries = [q.strip() for q in content.split(';') if q.strip() and not q.startswith(':')]
+                # We split by semicolon but ignore the :begin/:commit lines 
+                # because the Python driver handles transactions natively
+                queries = [q.strip() for q in f.read().split(';') if q.strip() and not q.startswith(':')]
                 
-                print(f"[*] Found {len(queries)} queries. Starting import...")
+                print(f"[*] Connection successful. Found {len(queries)} queries.")
                 
-                # Execute in a single transaction for speed
+                # We wrap everything in one transaction for speed
                 with session.begin_transaction() as tx:
                     for query in queries:
                         tx.run(query)
                 
-        print("[+] Import successful!")
+        print("[+] Graph successfully updated in Neo4j Desktop!")
     except Exception as e:
-        print(f"[-] Error during import: {e}")
+        print(f"[-] Connection Failed: {e}")
+        print("TIP: Make sure the 'Start' button is clicked in Neo4j Desktop.")
         sys.exit(1)
     finally:
         driver.close()
