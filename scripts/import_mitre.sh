@@ -31,7 +31,7 @@ cat import_ttp.cypher >> transaction.cypher
 echo ":commit" >> transaction.cypher
 
 # We use standard cypher-shell here (no JSON format needed for import)
-cat transaction.cypher | cypher-shell -u $NEO4J_USER -p $NEO4J_PASS --address $NEO4J_URI
+#cat transaction.cypher | cypher-shell -u $NEO4J_USER -p $NEO4J_PASS --address $NEO4J_URI
 
 # Cleanup temp files
 rm import_ttp.cypher transaction.cypher
