@@ -97,6 +97,7 @@ pipeline {
         }
         success {
             echo "✅ Build Successful! End-to-End Cloud Risk Engine execution complete."
+            archiveArtifacts artifacts: 'output/*.json, remediation_fixes/*.tf, remediation_fixes/*.json', allowEmptyArchive: true
         }
         failure {
             echo "❌ Build Failed. Check the logs for errors."
