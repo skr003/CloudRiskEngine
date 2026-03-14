@@ -8,7 +8,7 @@ USER = "neo4j"
 PASS = "PASTE_YOUR_NEW_PASSWORD_HERE" 
 
 # Point this to whatever file your import_mitre.sh generates
-CYPHER_FILE = "mitre.cypher" 
+CYPHER_FILE = "mitre_import.cypher"
 
 def run_mitre_import():
     if not os.path.exists(CYPHER_FILE):
