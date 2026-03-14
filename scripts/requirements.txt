@@ -4,6 +4,7 @@ python-dotenv>=1.0.0
 
 # Dashboard & UI
 streamlit>=1.31.0
+pyvis
 
 # Data Processing & Graph Analytics (for Stage 6 Dashboard)
 pandas
