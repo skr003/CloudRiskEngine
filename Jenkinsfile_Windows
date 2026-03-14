@@ -56,8 +56,7 @@ pipeline {
             steps {
                 script {
                     echo "[*] Generating Least Privilege Suggestions & Policy-as-Code..."
-                    // Placeholder: Script to generate Terraform fixes or trigger Jira tickets
-                    // bat 'python scripts/generate_tf_fixes.py'
+                    bat '"C:/Users/admin/AppData/Local/Programs/Python/Python312/python.exe" scripts/remediation.py'
                 }
             }
         }
