@@ -16,23 +16,24 @@ def fetch_data():
     nodes_data, edges_data, mitre_data = {}, [], []
     try:
         with driver.session() as session:
-            # 1. Fetch Graph Data
-            graph_res = session.run("""
-                MATCH (p:Principal)-[:ASSIGNED]->(r:Role)
-                RETURN p.id as id, COALESCE(p.displayName, p.id) as name, r.name as role
-                LIMIT 50
-            """)
-            for rec in graph_res:
-                nodes_data[rec['id']] = {"label": rec['name'], "color": "#FF4B4B"}
-                nodes_data[rec['role']] = {"label": rec['role'], "color": "#00B4D8"}
-                edges_data.append((rec['id'], rec['role']))
+            # --- Graph Data Logic (Keep your existing code here) ---
+            # ... (graph_res logic) ...
 
-            # 2. Fetch MITRE Data
-            mitre_res = session.run("MATCH (t:Technique) RETURN t.id as id, t.name as name, t.tactic as tactic")
+            # --- IMPROVED MITRE DATA LOGIC ---
+            # This query returns the entire node object 't'
+            mitre_res = session.run("MATCH (t:Technique) RETURN properties(t) as props")
+            
             for rec in mitre_res:
-                mitre_data.append({"ID": rec['id'], "Name": rec['name'], "Tactic": rec['tactic']})
+                props = rec['props']
+                # We normalize the keys so the table headers look professional
+                mitre_data.append({
+                    "Technique ID": props.get('id') or props.get('ID') or "N/A",
+                    "Technique Name": props.get('name') or props.get('Name') or "N/A",
+                    "Tactic / Phase": props.get('tactic') or props.get('Tactic') or "N/A"
+                })
                 
-    finally: driver.close()
+    finally: 
+        driver.close()
     return nodes_data, edges_data, mitre_data
 
 nodes_dict, edges_list, mitre_list = fetch_data()
