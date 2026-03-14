@@ -66,7 +66,7 @@ pipeline {
                     
                     echo "Importing TTPs to Graph..."
                     // ✅ CORRECT: Feed the .sh file to Git Bash
-                    bat '"C:/Program Files/Git/bin/sh.exe" scripts/import_mitre.sh' scripts/import_mitre.sh'
+                    bat '"C:/Program Files/Git/bin/sh.exe" scripts/import_mitre.sh'
                 }
             }
         }
