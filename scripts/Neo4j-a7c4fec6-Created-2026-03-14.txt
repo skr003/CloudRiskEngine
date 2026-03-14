@@ -1,4 +1,4 @@
-NEO4J_URI=neo4j+s://a7c4fec6.databases.neo4j.io
+NEO4J_URI=neo4j+ssc://a7c4fec6.databases.neo4j.io
 NEO4J_USERNAME=a7c4fec6
 NEO4J_PASSWORD=pUTM7SqI9HE6H8awExoZK2PKEHznG2sIMFYEaibOwY8
 NEO4J_DATABASE=a7c4fec6
