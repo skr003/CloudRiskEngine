@@ -44,7 +44,7 @@ echo "[*] [Module 3] Generating Analysis Report ($OUTPUT_RESULT)..."
 
 # FIX: Use Python instead of cypher-shell --format json
 # This avoids the "invalid choice: json" error on older clients.
-python3 -c "
+"C:/Users/admin/AppData/Local/Programs/Python/Python312/python.exe" -c "
 import os
 import json
 from neo4j import GraphDatabase
