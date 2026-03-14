@@ -4,7 +4,7 @@ from neo4j import GraphDatabase
 
 # --- UPDATE THESE WITH YOUR AURA CREDENTIALS ---
 URI = "neo4j+ssc://aa1f8e2f.databases.neo4j.io" 
-USER = "aa1f8e2f"
+USER = "neo4j"
 PASS = "xUqfRp2e7QFs2xRXw7hGauuDqhyaM2OdOph5R_5zsqI" 
 CYPHER_FILE = "import.cypher"
 
