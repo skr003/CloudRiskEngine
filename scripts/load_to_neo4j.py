@@ -2,7 +2,7 @@ import sys
 import os
 from neo4j import GraphDatabase
 
-# URI copied exactly from your screenshot
+# Configuration matched to your Neo4j Desktop screenshot
 URI = "neo4j://127.0.0.1:7687" 
 USER = "neo4j"
 PASS = "Admin@123$%^" 
@@ -13,27 +13,22 @@ def run_import():
         print(f"[-] Error: {CYPHER_FILE} not found.")
         sys.exit(1)
 
-    print(f"[*] Attempting to connect to: {URI}")
     driver = GraphDatabase.driver(URI, auth=(USER, PASS))
-    
     try:
-        # Explicitly target the 'neo4j' database shown in your screenshot
         with driver.session(database="neo4j") as session:
             print("[*] Wiping old graph data...")
             session.run("MATCH (n) DETACH DELETE n")
 
             with open(CYPHER_FILE, 'r') as f:
-                queries = [q.strip() for q in f.read().split(';') if q.strip() and not q.startswith(':')]
+                queries = [q.strip() for q in f.read().split(';') if q.strip()]
                 
-            print(f"[+] Connection successful. Executing {len(queries)} queries...")
+            print(f"[*] Connection successful. Executing {len(queries)} queries...")
             
             with session.begin_transaction() as tx:
                 for query in queries:
                     tx.run(query)
                 
-            result = session.run("MATCH (n) RETURN count(n) AS count")
-            print(f"[+] Success! Nodes in graph: {result.single()['count']}")
-
+            print("[+] Success! Graph updated.")
     except Exception as e:
         print(f"[-] FATAL ERROR: {e}")
         sys.exit(1)
