@@ -25,13 +25,19 @@ CYPHER_FILE="import.cypher"
 echo ":begin" > $CYPHER_FILE
 
 # 2. Convert JSON objects to Cypher MERGE statements
-# We look for roleDefinitionName, principalId, and scope.
-cat $ASSIGN_FILE | jq -r "
-  .[] | 
-  "MERGE (p:Principal {id:\"" + .principalId + "\"}) 
-   MERGE (r:Role {name:\"" + .roleDefinitionName + "\"}) 
-   MERGE (p)-[:ASSIGNED {scope:\"" + .scope + "\"}]->(r);"
-" >> $CYPHER_FILE
+
+# Define the jq filter in a variable to keep the cat command clean
+FILTER_QUERY=$(cat <<'EOF'
+.[] | 
+"MERGE (p:Principal {id:\"" + .principalId + "\"}) 
+ MERGE (r:Role {name:\"" + .roleDefinitionName + "\"}) 
+ MERGE (p)-[:ASSIGNED {scope:\"" + .scope + "\"}]->(r);"
+EOF
+)
+
+# Now run jq using that variable
+cat "$ASSIGN_FILE" | jq -r "$FILTER_QUERY" >> "$CYPHER_FILE"
+
 
 # 3. Commit Transaction
 echo ":commit" >> $CYPHER_FILE
