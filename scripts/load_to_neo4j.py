@@ -8,7 +8,7 @@ URI = "bolt+ssc://a7c4fec6.databases.neo4j.io"
 USER = "neo4j"
 PASS = "pUTM7SqI9HE6H8awExoZK2PKEHznG2sIMFYEaibOwY8" 
 
-CYPHER_FILE = "import.cypher"
+CYPHER_FILE = "output/mitre_mapping_with_name.json"
 
 def run_import():
     if not os.path.exists(CYPHER_FILE):
