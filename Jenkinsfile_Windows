@@ -80,7 +80,7 @@ pipeline {
                 script {
                     echo "[*] Generating Heatmaps and updating Web UI..."
                     // Placeholder: Deploying/Updating your Streamlit or Grafana dashboard
-                    bat 'streamlit run dashboard/app.py' 
+                    bat '"C:/Users/admin/AppData/Local/Programs/Python/Python312/Scripts/streamlit" run dashboard/app.py' 
                 }
             }
         }
