@@ -1,5 +1,4 @@
 pipeline {
-    // Optionally specify a Windows node if you have a mixed environment: agent { label 'windows' }
     agent any
 
     environment {
@@ -14,83 +13,93 @@ pipeline {
     }
 
     stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
-
         stage('Setup Dependencies') {
             steps {
-                // Windows typically uses 'pip' and 'python' rather than 'pip3'/'python3'
                 bat 'C:/Users/admin/AppData/Local/Programs/Python/Python312/Scripts/pip.exe install -r scripts/requirements.txt'
             }
         }
 
-        stage('Cloud Data Collector') {
+        stage('1. Azure Cloud') {
             steps {
                 script {
-                    echo "Logging into Azure..."
-                    // Use %VAR% syntax for environment variables in Windows batch scripts
+                    echo "[*] Connecting to Azure Cloud Environment..."
+                    // Placeholder: Azure CLI login or Service Principal authentication
                     bat 'az login --service-principal -u "%AZURE_CLIENT_ID%" -p "%AZURE_CLIENT_SECRET%" --tenant "%AZURE_TENANT_ID%"'
-                    
-                    echo "Running Collector Module..."
-                    // Calls bash explicitly. Ensure Git Bash is in your Windows PATH.
+                }
+            }
+        }
+
+        stage('2. Cloud Data Collector Module') {
+            steps {
+                script {
+                    echo "[*] Pulling IAM/Role Data and Activity Logs via Graph API..."
+                    // Placeholder: Your script that fetches data and creates the output JSONs
                     bat '"C:/Program Files/Git/bin/sh.exe" scripts/collect_iam_data.sh'
                 }
             }
         }
 
-        stage('Privilege Analysis (Graph Build)') {
+        stage('3. Privilege Analysis & Risk Engine') {
             steps {
                 script {
-                    echo "Building Cypher Import File..."
-                    // Generate the .cypher file
+                    echo "[*] Constructing Permission Graph in Neo4j..."
                     bat '"C:/Program Files/Git/bin/sh.exe" scripts/build_graph.sh'
-            
-                    echo "Uploading to Neo4j via Python Driver..."
-                    // Execute the import using the driver installed in your Python environment
                     bat '"C:/Users/admin/AppData/Local/Programs/Python/Python312/python.exe" scripts/load_to_neo4j.py'            
-                  }
-             }
-        }
-
-        stage('Threat Intel Mapping') {
-            steps {
-                script {
-                    echo "Mapping MITRE TTPs..."
-                    bat '"C:/Users/admin/AppData/Local/Programs/Python/Python312/python.exe" scripts/map_mitre.py'
                     
-                    echo "Importing TTPs to Graph..."
-                    // ✅ CORRECT: Feed the .sh file to Git Bash
-                    bat '"C:/Users/admin/AppData/Local/Programs/Python/Python312/python.exe" scripts/load_mitre.py'
-                    bat '"C:/Program Files/Git/bin/sh.exe" scripts/import_mitre.sh'
+                    // Cleanup intermediate file
+                    bat 'del import.cypher'
                 }
             }
         }
 
-        stage('Remediation & Reporting') {
+        stage('5. Remediation Engine') {
             steps {
                 script {
-                    echo "Generating Remediation Plans..."
-                    bat '"C:/Users/admin/AppData/Local/Programs/Python/Python312/python.exe" scripts/remediation.py'
+                    echo "[*] Generating Least Privilege Suggestions & Policy-as-Code..."
+                    // Placeholder: Script to generate Terraform fixes or trigger Jira tickets
+                    // bat 'python scripts/generate_tf_fixes.py'
                 }
             }
         }
-        
-        stage('Deploy Dashboard') {
+
+        stage('6. Threat Intelligence / MITRE Mapping Engine') {
             steps {
-                echo "Dashboard is ready. Open a terminal and run: streamlit run dashboard/app.py"
+                script {
+                    echo "[*] Mapping activities to known TTPs in the Graph..."
+                    bat '"C:/Program Files/Git/bin/sh.exe" scripts/import_mitre.sh'
+                    bat '"C:/Users/admin/AppData/Local/Programs/Python/Python312/python.exe" scripts/load_mitre.py'
+                    
+                    // Cleanup intermediate file
+                    bat 'del mitre.cypher'
+                }
+            }
+        }
+
+        stage('6. Risk Dashboard & Reporting') {
+            steps {
+                script {
+                    echo "[*] Generating Heatmaps and updating Web UI..."
+                    // Placeholder: Deploying/Updating your Streamlit or Grafana dashboard
+                    // bat 'streamlit run dashboard/app.py' 
+                }
             }
         }
     }
 
     post {
         always {
-            // Uses backslashes for Windows artifact paths
-            archiveArtifacts artifacts: 'output\\*.*', allowEmptyArchive: true
-            sleep(time: 2, unit: 'SECONDS') 
+            script {
+                echo "[*] Pipeline finished. Preparing to clean workspace..."
+                sleep(time: 2, unit: 'SECONDS') 
+            }
             cleanWs(disableDeferredWipeout: true, deleteDirs: true)
+            echo "[+] Workspace cleaned successfully."
+        }
+        success {
+            echo "✅ Build Successful! End-to-End Cloud Risk Engine execution complete."
+        }
+        failure {
+            echo "❌ Build Failed. Check the logs for errors."
         }
     }
 }
