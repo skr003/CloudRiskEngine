@@ -3,7 +3,7 @@ import os
 from neo4j import GraphDatabase
 
 # CRITICAL: Must start with 'bolt://' or 'neo4j://'
-URI = "bolt://127.0.0.1:7687" 
+URI = "neo4j://127.0.0.1:7687" 
 USER = "neo4j"
 PASS = "Admin@123$%^" 
 CYPHER_FILE = "import.cypher"
