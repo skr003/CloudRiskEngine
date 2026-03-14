@@ -52,15 +52,6 @@ pipeline {
             }
         }
 
-        stage('4. Remediation Engine') {
-            steps {
-                script {
-                    echo "[*] Generating Least Privilege Suggestions & Policy-as-Code..."
-                    bat '"C:/Users/admin/AppData/Local/Programs/Python/Python312/python.exe" scripts/remediation.py'
-                }
-            }
-        }
-
         stage('5. Threat Intelligence / MITRE Mapping Engine') {
             steps {
                 script {
@@ -71,6 +62,15 @@ pipeline {
                     
                     // Cleanup intermediate file
                     bat 'del mitre.cypher'
+                }
+            }
+        }
+
+        stage('4. Remediation Engine') {
+            steps {
+                script {
+                    echo "[*] Generating Least Privilege Suggestions & Policy-as-Code..."
+                    bat '"C:/Users/admin/AppData/Local/Programs/Python/Python312/python.exe" scripts/remediation.py'
                 }
             }
         }
