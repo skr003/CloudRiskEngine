@@ -2,10 +2,10 @@ import sys
 import os
 from neo4j import GraphDatabase
 
-# Configuration matched to your Neo4j Desktop screenshot
-URI = "neo4j://127.0.0.1:7687" 
+# UPDATE THESE from your Aura downloaded credentials file
+URI = "neo4j+s://your-unique-id.databases.neo4j.io" 
 USER = "neo4j"
-PASS = "Admin@123$%^" 
+PASS = "your-generated-aura-password" 
 CYPHER_FILE = "import.cypher"
 
 def run_import():
@@ -13,24 +13,28 @@ def run_import():
         print(f"[-] Error: {CYPHER_FILE} not found.")
         sys.exit(1)
 
+    # Aura requires the +s protocol for security
+    print(f"[*] Connecting to Neo4j Aura...")
     driver = GraphDatabase.driver(URI, auth=(USER, PASS))
+    
     try:
+        # In Aura Free, the database name is always 'neo4j'
         with driver.session(database="neo4j") as session:
-            print("[*] Wiping old graph data...")
+            print("[*] Wiping old data from Aura...")
             session.run("MATCH (n) DETACH DELETE n")
 
             with open(CYPHER_FILE, 'r') as f:
-                queries = [q.strip() for q in f.read().split(';') if q.strip()]
-                
-            print(f"[*] Connection successful. Executing {len(queries)} queries...")
+                # Filter out :begin/:commit lines
+                queries = [q.strip() for q in f.read().split(';') if q.strip() and not q.startswith(':')]
             
+            print(f"[*] Executing {len(queries)} queries on Cloud instance...")
             with session.begin_transaction() as tx:
                 for query in queries:
                     tx.run(query)
                 
-            print("[+] Success! Graph updated.")
+            print("[+] Success! Aura graph updated.")
     except Exception as e:
-        print(f"[-] FATAL ERROR: {e}")
+        print(f"[-] Aura Connection Failed: {e}")
         sys.exit(1)
     finally:
         driver.close()
