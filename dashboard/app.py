@@ -18,24 +18,30 @@ def fetch_graph_data():
     edges = []
     try:
         with driver.session() as session:
-            # Query to get Principals and the Roles they are assigned
+            # Cypher Update: COALESCE grabs the first property that isn't null.
+            # It tries principalName, then displayName, then name. 
+            # If all fail, it falls back to the raw ID.
             query = """
             MATCH (p:Principal)-[a:ASSIGNED]->(r:Role)
-            RETURN p.id AS principal, r.name AS role
+            RETURN p.id AS principal_id, 
+                   COALESCE(p.principalName, p.displayName, p.name, p.id) AS principal_label, 
+                   r.name AS role
             LIMIT 50
             """
             result = session.run(query)
             for record in result:
-                p = record["principal"]
+                p_id = record["principal_id"]
+                p_label = record["principal_label"]
                 r = record["role"]
                 
-                # Categorize nodes so we can color them differently
-                if p not in nodes:
-                    nodes[p] = "Principal"
+                # Store the friendly label inside our dictionary
+                if p_id not in nodes:
+                    nodes[p_id] = {"type": "Principal", "label": p_label}
                 if r not in nodes:
-                    nodes[r] = "Role"
+                    nodes[r] = {"type": "Role", "label": r}
                     
-                edges.append((p, r))
+                # The relationship is still drawn between the unique IDs
+                edges.append((p_id, r))
     except Exception as e:
         st.error(f"Database connection failed: {e}")
     finally:
@@ -49,26 +55,19 @@ with st.spinner("Rendering Interactive Graph..."):
     nodes_dict, edges = fetch_graph_data()
 
     if edges:
-        # 1. Initialize the interactive network graph
-        # Dark background (#0E1117) matches Streamlit's dark mode perfectly
         net = Network(height="600px", width="100%", directed=True, bgcolor="#0E1117", font_color="white")
 
-        # 2. Add nodes with smart formatting
-        for node_id, node_type in nodes_dict.items():
-            if node_type == "Principal":
-                # Fix: Shorten the massive UUIDs for the label so it looks clean
-                short_label = node_id[:8] + "..."
-                # Color Principals RED to signify potential risk origin points
-                net.add_node(node_id, label=short_label, title=f"Principal ID: {node_id}", color="#FF4B4B", shape="dot", size=25)
+        # Update how nodes are added to the graph using the new friendly labels
+        for node_id, node_data in nodes_dict.items():
+            if node_data["type"] == "Principal":
+                # Now it displays 'sudharshan@domain.com' but keeps the UUID in the hover title!
+                net.add_node(node_id, label=node_data["label"], title=f"Principal ID: {node_id}", color="#FF4B4B", shape="dot", size=25)
             else:
-                # Color Roles BLUE and make them box-shaped to distinguish them
-                net.add_node(node_id, label=node_id, title=f"Azure Role: {node_id}", color="#00B4D8", shape="box")
+                net.add_node(node_id, label=node_data["label"], title=f"Azure Role: {node_id}", color="#00B4D8", shape="box")
 
-        # 3. Add the relationships (lines)
         for src, dst in edges:
             net.add_edge(src, dst, color="#555555")
 
-        # 4. Inject physics so the graph "bounces" and spaces itself out automatically
         net.set_options("""
         var options = {
           "physics": {
@@ -84,7 +83,6 @@ with st.spinner("Rendering Interactive Graph..."):
         }
         """)
 
-        # 5. Save the interactive graph to an HTML file and embed it in Streamlit
         net.save_graph("pyvis_graph.html")
         with open("pyvis_graph.html", 'r', encoding='utf-8') as HtmlFile:
             source_code = HtmlFile.read()
