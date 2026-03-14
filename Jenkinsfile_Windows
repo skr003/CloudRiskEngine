@@ -85,9 +85,8 @@ pipeline {
                     echo "[*] Generating Heatmaps and updating Web UI..."
                     // Placeholder: Deploying/Updating your Streamlit or Grafana dashboard
                     //bat '"C:/Users/admin/AppData/Local/Programs/Python/Python312/Scripts/streamlit" run dashboard/app.py' 
-                    bat '"C:/Users/admin/AppData/Local/Programs/Python/Python312/python.exe" -m streamlit run dashboard/app.py --server.headless true --browser.gatherUsageStats false'
-                    //bat 'start /B "C:/Users/admin/AppData/Local/Programs/Python/Python312/python.exe" -m streamlit run dashboard/app.py --server.headless true --browser.gatherUsageStats false'
-                }
+                    //bat '"C:/Users/admin/AppData/Local/Programs/Python/Python312/python.exe" -m streamlit run dashboard/app.py --server.headless true --browser.gatherUsageStats false'
+                    bat 'start /B "" "C:/Users/admin/AppData/Local/Programs/Python/Python312/python.exe" -m streamlit run dashboard/app.py --server.headless true --browser.gatherUsageStats false > NUL 2>&1'                }
             }
         }
     }
