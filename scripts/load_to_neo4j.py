@@ -3,9 +3,9 @@ import os
 from neo4j import GraphDatabase
 
 # UPDATE THESE from your Aura downloaded credentials file
-URI = "neo4j+s://your-unique-id.databases.neo4j.io" 
-USER = "neo4j"
-PASS = "your-generated-aura-password" 
+URI = "neo4j+s://aa1f8e2f.databases.neo4j.io" 
+USER = "aa1f8e2f"
+PASS = "xUqfRp2e7QFs2xRXw7hGauuDqhyaM2OdOph5R_5zsqI" 
 CYPHER_FILE = "import.cypher"
 
 def run_import():
