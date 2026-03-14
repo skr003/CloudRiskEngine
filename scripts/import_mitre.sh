@@ -7,7 +7,9 @@ export NEO4J_USER="neo4j"
 export NEO4J_PASS="Admin@123$%^" 
 
 INPUT_MAPPING="output/mitre_mapping.json"
-OUTPUT_RESULT="output/mitre_mapping_with_name.json"
+#OUTPUT_RESULT="output/mitre_mapping_with_name.json"
+OUTPUT_RESULT="output/mitre_import.cypher"
+#CYPHER_FILE="output/mitre_import.cypher"
 
 # --- Part 1: Import TTPs into Neo4j (Using cypher-shell) ---
 if [ ! -f "$INPUT_MAPPING" ]; then
