@@ -44,10 +44,18 @@ pipeline {
         stage('Privilege Analysis (Graph Build)') {
             steps {
                 script {
-                    echo "Building Neo4j Graph..."
+                    echo "Building Cypher Import File..."
+                    // Generate the .cypher file
                     bat '"C:/Program Files/Git/bin/sh.exe" scripts/build_graph.sh'
-                }
-            }
+            
+                    echo "Uploading to Neo4j via Python Driver..."
+                    // Execute the import using the driver installed in your Python environment
+                    bat 'python scripts/load_to_neo4j.py'
+            
+                    // Cleanup
+                    bat 'del import.cypher'
+                  }
+             }
         }
 
         stage('Threat Intel Mapping') {
