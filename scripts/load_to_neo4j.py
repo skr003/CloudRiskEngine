@@ -1,48 +1,54 @@
 import sys
 import os
+import dotenv
 from neo4j import GraphDatabase
 
-# --- UPDATE THESE WITH YOUR AURA CREDENTIALS ---
-URI = "neo4j+ssc://aa1f8e2f.databases.neo4j.io" 
-USER = "aa1f8e2f"
-PASS = "xUqfRp2e7QFs2xRXw7hGauuDqhyaM2OdOph5R_5zsqI" 
+# 1. Load credentials directly from the Aura text file as the docs recommend
+# Replace this filename with your actual downloaded file name
+ENV_FILE = "scripts/Neo4j-aa1f8e2f-Created-2026-03-14.txt"
 CYPHER_FILE = "import.cypher"
 
 def run_import():
+    if not dotenv.load_dotenv(ENV_FILE):
+        print(f"[-] Error: Could not load Aura environment file: {ENV_FILE}")
+        sys.exit(1)
+
+    # 2. Extract and modify the URI to bypass the routing table
+    # We replace 'neo4j+s' with 'bolt+s' as per the official docs
+    raw_uri = os.getenv("NEO4J_URI")
+    URI = raw_uri.replace("neo4j+s://", "bolt+s://") 
+    
+    AUTH = (os.getenv("NEO4J_USERNAME"), os.getenv("NEO4J_PASSWORD"))
+
     if not os.path.exists(CYPHER_FILE):
         print(f"[-] Error: {CYPHER_FILE} not found.")
         sys.exit(1)
 
-    print(f"[*] Connecting to Neo4j Aura at {URI}...")
+    print(f"[*] Connecting directly via Bolt to bypass routing: {URI}...")
     
-    # We use neo4j+s for the encrypted cloud connection
-    driver = GraphDatabase.driver(URI, auth=(USER, PASS))
+    # 3. Create Driver and Verify Connectivity (as shown in the docs)
+    driver = GraphDatabase.driver(URI, auth=AUTH)
     
     try:
-        # Check connectivity first
         driver.verify_connectivity()
+        print("[+] Connection established successfully.")
         
         with driver.session(database="neo4j") as session:
-            # 1. Clear old graph data for a fresh start
-            print("[*] Wiping old data from cloud instance...")
+            print("[*] Wiping old data from Aura...")
             session.run("MATCH (n) DETACH DELETE n")
 
-            # 2. Read the generated Cypher file
             with open(CYPHER_FILE, 'r') as f:
                 queries = [q.strip() for q in f.read().split(';') if q.strip()]
             
             print(f"[*] Executing {len(queries)} queries...")
-            
-            # 3. Batch execute in a single transaction
             with session.begin_transaction() as tx:
                 for query in queries:
                     tx.run(query)
                 
-            print("[+] Success! Aura graph has been updated.")
+            print("[+] Success! Cloud risk graph updated.")
             
     except Exception as e:
         print(f"[-] FATAL ERROR: {e}")
-        print("TIP: Ensure your URI starts with 'neo4j+s://' and your Aura instance is 'Running'.")
         sys.exit(1)
     finally:
         driver.close()
