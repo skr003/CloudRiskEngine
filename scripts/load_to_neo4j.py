@@ -5,7 +5,7 @@ from neo4j import GraphDatabase
 
 # 1. Load credentials directly from the Aura text file as the docs recommend
 # Replace this filename with your actual downloaded file name
-ENV_FILE = "scripts/Neo4j-aa1f8e2f-Created-2026-03-14.txt"
+ENV_FILE = "scripts/Neo4j-a7c4fec6-Created-2026-03-14.txt"
 CYPHER_FILE = "import.cypher"
 
 def run_import():
