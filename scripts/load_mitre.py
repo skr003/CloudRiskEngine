@@ -6,9 +6,9 @@ from neo4j import GraphDatabase
 # Using bolt+ssc:// to bypass local Windows certificate/routing issues
 URI = "bolt+ssc://a7c4fec6.databases.neo4j.io" 
 USER = "neo4j"
-PASS = "PASTE_YOUR_NEW_PASSWORD_HERE" # Update this with your actual Aura instance password
-
+PASS = "pUTM7SqI9HE6H8awExoZK2PKEHznG2sIMFYEaibOwY8" 
 # This must perfectly match the output file from import_mitre.sh
+
 CYPHER_FILE = "mitre.cypher" 
 
 def run_mitre_import():
