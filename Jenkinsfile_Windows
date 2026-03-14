@@ -102,7 +102,7 @@ pipeline {
                 echo "[*] Pipeline finished. Preparing to clean workspace..."
                 sleep 10
             }
-            //cleanWs(disableDeferredWipeout: true, deleteDirs: true)
+            cleanWs(disableDeferredWipeout: true, deleteDirs: true)
             echo "[+] Workspace cleaned successfully."
         }
         success {
